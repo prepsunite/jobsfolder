@@ -194,13 +194,58 @@ export default async function handler(req, res) {
     }
   }
 
+  // Verify whether an institutional college contract/pass is currently active and unexpired
+  async function verifyCollegeContractActive(collegeId) {
+    const cidUpper = String(collegeId || '').trim().toUpperCase();
+    if (!cidUpper || cidUpper === 'PUBLIC' || cidUpper === 'OPEN' || cidUpper === 'SELF' || cidUpper === 'INDIVIDUAL') {
+      return { active: true };
+    }
+    try {
+      const targetCids = await resolveTargetCollegeIds(collegeId);
+      const { data: cols } = await supabaseService
+        .from('colleges')
+        .select('id, name, contract_status, valid_until, max_licenses, is_deleted')
+        .in('id', targetCids)
+        .limit(5);
+      const activeRow = (cols || []).find((c) => !c.is_deleted);
+      if (!activeRow) {
+        return {
+          active: false,
+          reason: 'Institutional campus pass is not registered or inactive. Please contact your TPO / PrepUnite administrator.',
+        };
+      }
+      const statusUpper = String(activeRow.contract_status || 'ACTIVE').toUpperCase();
+      if (statusUpper === 'SUSPENDED' || statusUpper === 'EXPIRED') {
+        return {
+          active: false,
+          reason: `Campus placement pass is currently ${statusUpper.toLowerCase()}. Please contact your TPO / PrepUnite administrator to activate it.`,
+        };
+      }
+      if (activeRow.valid_until) {
+        const expMs = new Date(activeRow.valid_until).getTime();
+        if (Number.isFinite(expMs) && expMs <= Date.now()) {
+          return {
+            active: false,
+            reason: 'Your campus placement pass has expired. Please ask your TPO to renew the institutional license.',
+          };
+        }
+      }
+      return { active: true, college: activeRow };
+    } catch {
+      return { active: false, reason: 'Unable to verify campus pass status.' };
+    }
+  }
+
   // Check if caller is enrolled student for a given college
   async function isStudentForCollege(collegeId) {
     if (isSuperAdmin) return true;
     if (!collegeId) return false;
     try {
+      const contractCheck = await verifyCollegeContractActive(collegeId);
+      if (!contractCheck.active) return false;
+
       const targetCids = await resolveTargetCollegeIds(collegeId);
-      const { data: studentRecord } = await supabaseAdmin
+      const { data: studentRecord } = await supabaseService
         .from('college_students')
         .select('id')
         .in('college_id', targetCids)
@@ -212,7 +257,7 @@ export default async function handler(req, res) {
 
       // Check active institutional subscription
       const subFilters = targetCids.map(cid => `payment_id.ilike.B2B_CAMPUS_${cid}%`).join(',');
-      const { data: subRecord } = await supabaseAdmin
+      const { data: subRecord } = await supabaseService
         .from('user_subscriptions')
         .select('id')
         .eq('user_email', userEmail)
@@ -673,6 +718,11 @@ export default async function handler(req, res) {
 
     const isTpo = await isTpoForCollege(examObj.college_id);
     if (isTpo) return { allowed: true, isPrivileged: true };
+
+    const contractCheck = await verifyCollegeContractActive(examObj.college_id);
+    if (!contractCheck.active) {
+      return { allowed: false, reason: contractCheck.reason };
+    }
 
     const isStu = await isStudentForCollege(examObj.college_id);
     if (!isStu) {
@@ -2399,6 +2449,12 @@ export default async function handler(req, res) {
         const isAuthorizedTpo = await isTpoForCollege(cleanExamPayload.college_id);
         if (!isAuthorizedTpo) {
           return res.status(403).json({ error: 'Forbidden: Caller is not an authorized TPO coordinator for this college.' });
+        }
+        if (!isSuperAdmin) {
+          const contractCheck = await verifyCollegeContractActive(cleanExamPayload.college_id);
+          if (!contractCheck.active) {
+            return res.status(403).json({ error: contractCheck.reason });
+          }
         }
       }
 

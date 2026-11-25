@@ -42,11 +42,26 @@ export default function CollegesTpoManager() {
   const [newCollegeName, setNewCollegeName] = useState('');
   const [newCollegeCode, setNewCollegeCode] = useState('');
   const [newCollegeCity, setNewCollegeCity] = useState('');
+  const [newCollegePack, setNewCollegePack] = useState<'FREE' | 'PRO' | 'ULTRA'>('PRO');
   const [newCollegeLicenses, setNewCollegeLicenses] = useState(1500);
   const [newCollegeTpoEmail, setNewCollegeTpoEmail] = useState('');
   const [newCollegeDurationPreset, setNewCollegeDurationPreset] = useState<'1D' | '30D' | '6M' | '1Y' | '2Y' | '3Y' | 'CUSTOM'>('1Y');
   const [newCollegeCustomDate, setNewCollegeCustomDate] = useState<string>('');
   const [isAddingCollege, setIsAddingCollege] = useState(false);
+
+  const applyCollegePackPreset = (pack: 'FREE' | 'PRO' | 'ULTRA') => {
+    setNewCollegePack(pack);
+    if (pack === 'FREE') {
+      setNewCollegeLicenses(100);
+      setNewCollegeDurationPreset('30D');
+    } else if (pack === 'PRO') {
+      setNewCollegeLicenses(1500);
+      setNewCollegeDurationPreset('1Y');
+    } else {
+      setNewCollegeLicenses(5000);
+      setNewCollegeDurationPreset('1Y');
+    }
+  };
 
   // Assign TPO State
   const [tpoEmail, setTpoEmail] = useState('');
@@ -104,8 +119,8 @@ export default function CollegesTpoManager() {
         code: newCollegeCode.trim().toUpperCase(),
         slug: newCollegeCode.trim().toLowerCase(),
         city: newCollegeCity.trim() || undefined,
-        contract_status: 'ACTIVE',
-        max_licenses: newCollegeLicenses || 1500,
+        contract_status: newCollegePack === 'FREE' ? 'PILOT' : 'ACTIVE',
+        max_licenses: newCollegeLicenses || (newCollegePack === 'FREE' ? 100 : newCollegePack === 'ULTRA' ? 5000 : 1500),
         valid_until: validUntilIso,
       });
 
@@ -401,14 +416,33 @@ export default function CollegesTpoManager() {
                   }`}
                 >
                   <div className="space-y-3">
-                    {/* Header: Name + Status */}
+                    {/* Header: Name + Pack Tier + Status */}
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="font-black text-sm text-slate-900 dark:text-white">{college.name}</span>
                           <span className="px-1.5 py-0.2 rounded text-[10px] font-mono font-bold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
                             {college.code}
                           </span>
+                          {(() => {
+                            const packLabel =
+                              college.contract_status === 'PILOT' || cap <= 150
+                                ? 'FREE'
+                                : cap > 1500
+                                ? 'ULTRA'
+                                : 'PRO';
+                            const packStyle =
+                              packLabel === 'ULTRA'
+                                ? 'bg-purple-100 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300 border-purple-200 dark:border-purple-800'
+                                : packLabel === 'PRO'
+                                ? 'bg-orange-100 text-[#FD4A32] dark:bg-orange-950/50 dark:text-orange-300 border-orange-200 dark:border-orange-800'
+                                : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700';
+                            return (
+                              <span className={`px-1.5 py-0.2 rounded text-[9px] font-black uppercase tracking-wider border ${packStyle}`}>
+                                {packLabel}
+                              </span>
+                            );
+                          })()}
                         </div>
                         <span className="text-[11px] text-slate-400 block">{college.city || 'Pan-India'}</span>
                       </div>
@@ -828,6 +862,30 @@ export default function CollegesTpoManager() {
               </div>
 
               <div>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                  Institutional Pack Tier (Free / Pro / Ultra) *
+                </label>
+                <div className="grid grid-cols-3 gap-2 mb-3">
+                  {[
+                    { id: 'FREE', label: 'Free Pilot', sub: '100 seats · 30d' },
+                    { id: 'PRO', label: 'Campus Pro', sub: '1,500 seats · 1yr' },
+                    { id: 'ULTRA', label: 'Campus Ultra', sub: '5,000 seats · 1yr' },
+                  ].map((pk) => (
+                    <button
+                      key={pk.id}
+                      type="button"
+                      onClick={() => applyCollegePackPreset(pk.id as 'FREE' | 'PRO' | 'ULTRA')}
+                      className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                        newCollegePack === pk.id
+                          ? 'border-[#FD4A32] bg-[#FD4A32]/10 text-[#FD4A32]'
+                          : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#151618] text-slate-700 dark:text-slate-300 hover:border-slate-400'
+                      }`}
+                    >
+                      <div className="text-xs font-black uppercase tracking-wider">{pk.label}</div>
+                      <div className="text-[10px] opacity-80 font-medium">{pk.sub}</div>
+                    </button>
+                  ))}
+                </div>
                 <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
                   Total Institutional Paid Student Seats (All Batches Combined) *
                 </label>

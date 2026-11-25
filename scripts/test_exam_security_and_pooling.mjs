@@ -867,6 +867,85 @@ async function main() {
           process.env.SUPABASE_SERVICE_ROLE_KEY = prevSrv;
         }
       });
+
+      await checkAsync('/api/campus-exams blocks student start-attempt when college pass is SUSPENDED or EXPIRED', async () => {
+        const prevUrl = process.env.SUPABASE_URL;
+        const prevSrv = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        process.env.SUPABASE_URL = env.VITE_SUPABASE_URL;
+        process.env.SUPABASE_SERVICE_ROLE_KEY = env.SUPABASE_SERVICE_ROLE_KEY;
+        const testColId = `col-test-${Date.now()}`;
+        const testExamId = `exam-colgate-${Date.now()}`;
+        const testStuId = `stu-test-${Date.now()}`;
+        try {
+          const { data: users } = await supabase.auth.admin.listUsers({ perPage: 20 });
+          const nonAdmin = users?.users?.find(u => u.email !== 'mockfolder@gmail.com' && u.email !== 'venkatmukala9@gmail.com');
+          assert(nonAdmin?.email, 'Need non-admin user');
+          const { data: linkData } = await supabase.auth.admin.generateLink({ type: 'magiclink', email: nonAdmin.email });
+          const sbAnon = createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
+          const { data: otpData } = await sbAnon.auth.verifyOtp({ token_hash: linkData.properties.hashed_token, type: 'magiclink' });
+          const jwt = otpData?.session?.access_token;
+          assert(jwt, 'Could not mint non-admin JWT');
+
+          // Create a SUSPENDED (unpaid) college, enroll the student, and create a live exam
+          await supabase.from('colleges').insert({
+            id: testColId,
+            name: 'Unpaid Test College',
+            code: `UTC${Date.now().toString().slice(-4)}`,
+            slug: testColId,
+            contract_status: 'SUSPENDED',
+            max_licenses: 100,
+            valid_until: new Date(Date.now() + 86_400_000).toISOString(),
+          });
+          await supabase.from('college_students').insert({
+            id: testStuId,
+            college_id: testColId,
+            email: nonAdmin.email.toLowerCase(),
+            user_id: nonAdmin.id,
+            full_name: 'Test Candidate',
+            status: 'ACTIVE',
+          });
+          await supabase.from('mock_exams').insert({
+            id: testExamId,
+            title: 'College Gate Test',
+            college_id: testColId,
+            duration_minutes: 30,
+            total_marks: 10,
+            is_active: true,
+            start_time: new Date(Date.now() - 60_000).toISOString(),
+            end_time: new Date(Date.now() + 3_600_000).toISOString(),
+          });
+
+          const invokeCampusExams =
+            typeof campusExamsHandler === 'function' ? campusExamsHandler : campusExamsHandler?.default;
+
+          // 1. Suspended college -> MUST reject 403
+          const resSuspended = createMockRes();
+          await invokeCampusExams(
+            { method: 'POST', headers: { authorization: `Bearer ${jwt}` }, body: { action: 'start-attempt', examId: testExamId } },
+            resSuspended
+          );
+          assert.strictEqual(resSuspended.statusCode, 403, `Expected 403 for SUSPENDED college, got ${resSuspended.statusCode}: ${JSON.stringify(resSuspended.body)}`);
+
+          // 2. Expired valid_until -> MUST reject 403 even if contract_status is ACTIVE
+          await supabase
+            .from('colleges')
+            .update({ contract_status: 'ACTIVE', valid_until: new Date(Date.now() - 86_400_000).toISOString() })
+            .eq('id', testColId);
+          const resExpired = createMockRes();
+          await invokeCampusExams(
+            { method: 'POST', headers: { authorization: `Bearer ${jwt}` }, body: { action: 'start-attempt', examId: testExamId } },
+            resExpired
+          );
+          assert.strictEqual(resExpired.statusCode, 403, `Expected 403 for expired college, got ${resExpired.statusCode}: ${JSON.stringify(resExpired.body)}`);
+        } finally {
+          await supabase.from('student_exam_attempts').delete().eq('mock_exam_id', testExamId);
+          await supabase.from('mock_exams').delete().eq('id', testExamId);
+          await supabase.from('college_students').delete().eq('id', testStuId);
+          await supabase.from('colleges').delete().eq('id', testColId);
+          process.env.SUPABASE_URL = prevUrl;
+          process.env.SUPABASE_SERVICE_ROLE_KEY = prevSrv;
+        }
+      });
     }
   }
 

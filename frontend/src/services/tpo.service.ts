@@ -7814,7 +7814,14 @@ export const tpoService = {
     studentCollegeId?: string,
     options?: { bypassCohortFilter?: boolean }
   ): Promise<{
-    college: { id: string; name: string; code?: string } | null;
+    college: {
+      id: string;
+      name: string;
+      code?: string;
+      contract_status?: 'ACTIVE' | 'PILOT' | 'EXPIRED' | 'SUSPENDED';
+      valid_until?: string;
+      isPassActive?: boolean;
+    } | null;
     exams: Array<MockExam & { attempt?: StudentExamAttempt | null }>;
   }> {
     if (!studentEmail) {
@@ -7847,12 +7854,20 @@ export const tpoService = {
       return { college: null, exams: [] };
     }
 
-    if (resolvedCollegeId && !resolvedCollegeName) {
+    let resolvedContractStatus: 'ACTIVE' | 'PILOT' | 'EXPIRED' | 'SUSPENDED' | undefined;
+    let resolvedValidUntil: string | undefined;
+    let resolvedIsPassActive = true;
+    if (resolvedCollegeId) {
       const colDetails = await this.getCollegeDetails(resolvedCollegeId);
       if (colDetails) {
-        resolvedCollegeName = colDetails.name;
-        resolvedCollegeCode = colDetails.code;
-      } else {
+        if (!resolvedCollegeName) resolvedCollegeName = colDetails.name;
+        if (!resolvedCollegeCode) resolvedCollegeCode = colDetails.code;
+        resolvedContractStatus = colDetails.contract_status;
+        resolvedValidUntil = colDetails.valid_until;
+        const statusOk = colDetails.contract_status === 'ACTIVE' || colDetails.contract_status === 'PILOT';
+        const notExpired = !colDetails.valid_until || new Date(colDetails.valid_until).getTime() > getServerDate().getTime();
+        resolvedIsPassActive = Boolean(!colDetails.is_deleted && statusOk && notExpired);
+      } else if (!resolvedCollegeName) {
         resolvedCollegeName = 'Campus Placement Partner';
         resolvedCollegeCode = 'CRT';
       }
@@ -7968,6 +7983,9 @@ export const tpoService = {
             id: resolvedCollegeId,
             name: resolvedCollegeName || 'Partner Institution',
             code: resolvedCollegeCode || 'CRT',
+            contract_status: resolvedContractStatus,
+            valid_until: resolvedValidUntil,
+            isPassActive: resolvedIsPassActive,
           }
         : null,
       exams: annotatedExams,

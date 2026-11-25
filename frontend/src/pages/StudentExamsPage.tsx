@@ -812,6 +812,13 @@ export default function StudentExamsPage() {
               hasAttempt: Boolean(exam.attempt),
             });
             const isRestrictedForStudent = !isEligible;
+            const isCampusPassInactive = Boolean(
+              isCollegeTpoExam &&
+              !isAdmin &&
+              !isTpoAdmin &&
+              enrolledCollege &&
+              enrolledCollege.isPassActive === false
+            );
 
             const targetBatchLabel = exam.target_batches?.length && !exam.target_batches.some(b => b.toUpperCase() === 'ALL')
               ? exam.target_batches.join(', ')
@@ -913,6 +920,11 @@ export default function StudentExamsPage() {
                           <span>
                             {isPassed ? 'Passed' : 'Completed'} ({attempt?.percentage || 0}%)
                           </span>
+                        </span>
+                      ) : isCampusPassInactive ? (
+                        <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border border-rose-200 dark:border-rose-800 flex items-center gap-1.5 shadow-2xs">
+                          <Lock className="w-3 h-3 text-rose-500" />
+                          <span>Pass Inactive</span>
                         </span>
                       ) : isInProgress ? (
                         <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200 dark:border-amber-800 flex items-center gap-1.5 animate-pulse shadow-2xs">
@@ -1109,6 +1121,15 @@ export default function StudentExamsPage() {
                         </button>
                       )}
                     </div>
+                  ) : isCampusPassInactive ? (
+                    <button
+                      disabled
+                      className="w-full py-2.5 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-not-allowed border border-rose-500/20"
+                      title="Your college's PrepUnite campus pass is inactive or expired. Please contact your TPO / PrepUnite administrator."
+                    >
+                      <Lock className="w-3.5 h-3.5" />
+                      <span>Campus Pass Inactive — Contact TPO</span>
+                    </button>
                   ) : isInProgress ? (
                     <div className="flex items-center gap-2">
                       <Link

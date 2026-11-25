@@ -460,7 +460,17 @@ export default function MockExamTestPage() {
     )
   );
 
+  const isCollegePassActive = useMemo(() => {
+    if (!isCollegeTpoExam || isSuperAdmin) return true;
+    if (!examCollege) return true; // wait until college details load; server start-attempt enforces authoritatively
+    if (examCollege.is_deleted) return false;
+    const statusOk = examCollege.contract_status === 'ACTIVE' || examCollege.contract_status === 'PILOT';
+    const notExpired = !examCollege.valid_until || new Date(examCollege.valid_until).getTime() > getServerNowMs();
+    return Boolean(statusOk && notExpired);
+  }, [isCollegeTpoExam, isSuperAdmin, examCollege]);
+
   const isEnrolledStudent = Boolean(
+    isCollegePassActive &&
     exam?.college_id && (
       dbEnrollmentVerified ||
       (userCollegeId && examTargetCollegeIds.some(id => id.toLowerCase() === userCollegeId.toLowerCase()))
