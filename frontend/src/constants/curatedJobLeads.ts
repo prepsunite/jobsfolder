@@ -1,6 +1,440 @@
-import type { ScrapedJobLead } from '@/types/jobs';
+export interface CuratedJobLead {
+  id: string;
+  company_name: string;
+  company_logo_url: string;
+  title: string;
+  type: string;
+  location: string;
+  experience_min: number;
+  experience_max: number;
+  experience_label: string;
+  stipend_or_salary: string;
+  description: string;
+  apply_url: string;
+  source: string;
+  age: string;
+  batch_eligibility: string;
+  tags: string[];
+}
 
-export const curatedJobLeads: ScrapedJobLead[] = [
+export const CURATED_JOB_LEADS: CuratedJobLead[] = [
+  {
+    "id": "jobspy_18",
+    "company_name": "Sanvima Solutions",
+    "company_logo_url": "https://img.naukimg.com/logo_images/groups/v1/11818395.gif",
+    "title": "Generative AI Engineer",
+    "type": "JOB",
+    "location": "Hyderabad(Uppal), India",
+    "experience_min": 0,
+    "experience_max": 1,
+    "experience_label": "0-1 yrs",
+    "stipend_or_salary": null,
+    "description": "**AI Developer / Generative AI Engineer**\n\n  \n\n**Company:** Sanvima Solutions Pvt. Ltd.  \n**Location:** Hyderabad  \n**Employment Type:** Full-time, Permanent  \n**Experience:** 01 Years\n\n  \n\n**About the Role**\n\n  \n\nWe are looking for a talented and passionate AI Developer to join our technology team. The candidate will be responsible for designing, developing, implementing, and maintaining AI-powered applications and intelligent automation solutions.\n\nThe ideal candidate should have hands-on experience with Python, Machine Learning, Generative AI, Large Language Models (LLMs), and AI integrations.\n\n  \n\n**Key Responsibilities**\n\n  \n\n* Develop and implement AI-powered applications and solutions.\n* Work with Generative AI models such as OpenAI, Claude, Gemini, and other LLMs.\n* Build Retrieval-Augmented Generation (RAG) applications and AI-powered knowledge bases.\n* Develop AI chatbots, virtual assistants, and intelligent automation systems.\n* Integrate AI APIs with web applications and backend systems.\n* Work with vector databases and embedding models.\n* Develop prompt engineering strategies and optimize AI responses.\n* Build REST APIs and integrate AI services with PHP, Python, Node.js, or other backend technologies.\n* Work with databases such as MySQL, PostgreSQL, and MongoDB.\n* Test, debug, optimize, and deploy AI applications.\n* Research emerging AI technologies and recommend suitable solutions.\n\n**Required Technical Skills**\n\n  \n\n* Strong knowledge of Python programming.\n* Understanding of Machine Learning and Deep Learning concepts.\n* Hands-on experience with Generative AI and LLMs.\n* Experience integrating OpenAI API, Claude API, or Gemini API.\n* Knowledge of RAG architecture and prompt engineering.\n* Familiarity with LangChain, LlamaIndex, or similar frameworks.\n* Experience with vector databases such as Pinecone, ChromaDB, or FAISS.\n* Knowledge of REST APIs, JSON, and backend development.\n* Understanding of SQL and database management.\n* Basic knowledge of Git, Docker, and cloud deployment.",
+    "apply_url": "https://www.naukri.com/job-listings-generative-ai-engineer-sanvima-solutions-hyderabad-0-to-1-years-251126032398",
+    "source": "JobSpy (naukri)",
+    "age": "2026-11-25",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
+    "tags": [
+      "Python",
+      "Node.js",
+      "SQL",
+      "PostgreSQL",
+      "MySQL",
+      "MongoDB",
+      "AI Engineering"
+    ]
+  },
+  {
+    "id": "jobspy_17",
+    "company_name": "Syntrex Technology",
+    "company_logo_url": "https://img.naukimg.com/logo_images/groups/v1/12554052.gif",
+    "title": "Business Analyst / Data Analyst & Data Science",
+    "type": "JOB",
+    "location": "Hyderabad, Pune, Bengaluru, India",
+    "experience_min": 0,
+    "experience_max": 1,
+    "experience_label": "Fresher (0-1 yrs)",
+    "stipend_or_salary": "₹3.5 - 6.5 LPA",
+    "description": "**Role Overview:**\n\nThe Business Analyst & Data Analyst will be responsible for analyzing business requirements, collecting and interpreting data, preparing reports, identifying trends, and providing data-driven insights to support business decisions and improve organizational performance.\n\n**Key Responsibilities**\n\n1. Gather, analyze, and document business requirements from stakeholders and clients.\n2. Collect, clean, validate, and organize data from multiple sources.\n3. Analyze business data to identify trends, patterns, opportunities, and areas for improvement.\n4. Prepare business reports, dashboards, and presentations using MS Excel, SQL, Power BI, or Tableau.\n5. Perform data analysis and generate meaningful insights to support strategic and operational decisions.\n6. Develop and maintain MIS reports, KPI dashboards, and performance tracking reports.\n7. Work with cross-functional teams to understand business challenges and recommend suitable solutions.\n8. Conduct business process analysis and identify opportunities for process improvement and automation.\n9. Perform data validation, reconciliation, and quality checks to ensure data accuracy and consistency.\n10. Translate business requirements into functional specifications, analytical reports, and actionable recommendations.\n11. Monitor business performance against key performance indicators (KPIs).\n12. Present analytical findings and business insights to management and relevant stakeholders.\n\n**Required Skills**\n\n* Advanced MS Excel Pivot Tables, VLOOKUP, XLOOKUP, and data analysis\n* SQL – Queries, joins, filtering, and database analysis\n* Power BI / Tableau – Dashboard and report development\n* Data cleaning, validation, and visualization\n* Business requirement analysis and documentation\n* MIS reporting and KPI tracking\n* Analytical thinking and problem-solving\n* Good communication and presentation skills\n\n**Candidate Profile**\n\n* Bachelor's degree in B.E., B.Tech, BCA, BBA, B.Com, B.Sc., MCA, MBA, or a related field.\n* Freshers and experienced candidates can apply.\n* Basic knowledge of business analysis, data analytics, and reporting tools.\n* Strong logical reasoning, analytical, and problem-solving abilities.\n* Willingness to learn new technologies and work on business-related data projects.\n\n  \n\n**Preferred candidate profile**",
+    "apply_url": "https://www.naukri.com/job-listings-business-analyst-data-analyst-data-science-syntrex-technology-hyderabad-pune-bengaluru-0-to-0-years-261126010889",
+    "source": "JobSpy (naukri)",
+    "age": "2026-11-26",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
+    "tags": [
+      "SQL",
+      "Data Analytics",
+      "Power BI",
+      "Tableau"
+    ]
+  },
+  {
+    "id": "jobspy_16",
+    "company_name": "Medpace Clinical Research India",
+    "company_logo_url": "https://img.naukimg.com/logo_images/groups/v1/4725119.gif",
+    "title": "Entry Level Software QA Test Engineer",
+    "type": "JOB",
+    "location": "Navi Mumbai, India",
+    "experience_min": 0,
+    "experience_max": 1,
+    "experience_label": "0-1 yrs",
+    "stipend_or_salary": null,
+    "description": "**Title**\n\nMedpace is growing rapidly, and we are currently seeking full-time, Junior Software QA Test Engineers (Validation Engineer) to join our growing Information Technology (IT) team in Mumbai office. \n\n**Overview**\n\nMedpace is a full-service clinical contract research organization (CRO) providing phase l-lV clinical development services to the biotechnology, pharmaceutical, and medical device industries. Our mission is to accelerate the global development of safe and effective medical therapeutics through the advancement of clinical research. We leverage in-country regulatory and therapeutic expertise across all major therapeutic areas including oncology, cardiology, metabolic, endocrinology, central nervous system, and anti-viral and anti-infective. Headquartered in Cincinnati, Ohio, we employ more than 6,500 people across 40+ countries.\n\n**Responsibilities**\n\n* Work closely with developers and end users throughout the software life cycle to ensure that applications meet the needs of the users;\n* Perform testing using a variety of test methodologies, including manual, exploratory, and automated testing;\n* Create and maintain test cases, test plans, and other documentation for projects;\n* Participate in constructive peer review of test cases;\n* Identify and report software defects and inconsistencies;\n* Review, analyze, and supplement requirement specifications, and ensure 100% test coverage; and\n* Help facilitate execution of acceptance test scripts by end users\n\n**Qualifications**\n\n* Bachelor’s degree in Computeer Science, Information Systems or related field;\n* Experience writing and executing manual testing for complex software applications; experience in automated testing is a plus!\n* Experience communicating and working within cross-departmental teams consisting of software developers, department leads, and end users;\n* Excellent computer skills; analytical, written, and oral communication skills; and\n* Experience in the regulated healthcare industry is a plus.\n\nWhen you join Medpace, you become part of an innovative team that brings cutting-edge therapies to market while building a meaningful and rewarding career focused on scientific excellence and improving patient outcomes around the world through continuous learning and cross-functional collaboration.\n\n***Purpose-Driven Work***\n\n* + Work alongside physicians, scientists, and industry-leading experts committed to advancing the global development of medical therapeutics through clinical research excellence\n\n***Collaborative Culture***\n\n* + Contribute to an interactive team environment that empowers decision making, creative thinking, and continuous learning through open communication and mutual trust.\n  + Leadership throughout Medpace is both accessible and approachable\n\n***Continuous Growth & Development***\n\n* + Office based environment with on-site mentors\n  + Defined career paths with clear advancement opportunities\n  + Industry renowned onboarding and training programs designed to accelerate professional development\n  + Ongoing training and continuous learning opportunities throughout your career\n  + An environment that encourages employees to influence change, contribute ideas, and grow quickly\n\n***Other Employee Benefits***\n\n* + Competitive compensation programs that recognize and reward performance\n  + Comprehensive health, wellness, retirement, and PTO benefits\n  + Office based culture with occasional WFH that provides flexibility for eligible positions after training\n  + Company-sponsored social events\n\n*Please note benefits may vary based on country.*\n\n**What to Expect Next**\n\nA Medpace team member will review your application and if your profile matches our current needs, you will be contacted for an interview. While we review all applications carefully, we are unable to respond to every applicant, and only candidates selected for interviews will be contacted.",
+    "apply_url": "https://www.naukri.com/job-listings-entry-level-software-qa-test-engineer-medpace-clinical-research-india-navi-mumbai-0-to-1-years-070126031462",
+    "source": "JobSpy (naukri)",
+    "age": "2026-11-26",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
+    "tags": []
+  },
+  {
+    "company_name": "Serenovolante Software Services Private Limited",
+    "company_logo_url": null,
+    "title": "Frontend Developer",
+    "type": "JOB",
+    "location": "India (Pan-India)",
+    "experience_min": 0,
+    "experience_max": 1,
+    "experience_label": "Fresher / 0–1 YOE",
+    "stipend_or_salary": "Competitive / Market standard",
+    "description": "### About the Opportunity (via Unstop)\n**Serenovolante Software Services Private Limited** is actively hiring for **Frontend Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **India (Pan-India)**.\n\n### Key Details\n- **Role:** Frontend Developer\n- **Company:** Serenovolante Software Services Private Limited\n- **Location:** India (Pan-India)\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop\n",
+    "apply_url": "https://unstop.com/jobs/frontend-developer-serenovolante-software-services-private-limited-1510077",
+    "source": "Unstop (Serenovolante Software Services Private Limited)",
+    "age": "Active Now",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
+    "tags": [
+      "Unstop",
+      "Campus Hiring"
+    ],
+    "sem_key": "serenovolantesoftware@@frontend developer",
+    "id": "unstop_15"
+  },
+  {
+    "company_name": "Kutumb",
+    "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-Wo37yNRXAv1493845730Hp7UUBurPa.png",
+    "title": "Frontend Developer",
+    "type": "JOB",
+    "location": "Bangalore Urban, Karnataka",
+    "experience_min": 0,
+    "experience_max": 1,
+    "experience_label": "Fresher / 0–1 YOE",
+    "stipend_or_salary": "Competitive / Market standard",
+    "description": "### About the Opportunity (via Unstop)\n**Kutumb** is actively hiring for **Frontend Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Bangalore Urban, Karnataka**.\n\n### Key Details\n- **Role:** Frontend Developer\n- **Company:** Kutumb\n- **Location:** Bangalore Urban, Karnataka\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop\n",
+    "apply_url": "https://unstop.com/jobs/frontend-developer-kutumb-1558504",
+    "source": "Unstop (Kutumb)",
+    "age": "Active Now",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
+    "tags": [
+      "Unstop",
+      "Campus Hiring"
+    ],
+    "sem_key": "kutumb@@frontend developer",
+    "id": "unstop_14"
+  },
+  {
+    "company_name": "Eonverse",
+    "company_logo_url": null,
+    "title": "Frontend Developer",
+    "type": "JOB",
+    "location": "Hyderabad, Telangana",
+    "experience_min": 0,
+    "experience_max": 1,
+    "experience_label": "Fresher / 0–1 YOE",
+    "stipend_or_salary": "Competitive / Market standard",
+    "description": "### About the Opportunity (via Unstop)\n**Eonverse** is actively hiring for **Frontend Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Hyderabad, Telangana**.\n\n### Key Details\n- **Role:** Frontend Developer\n- **Company:** Eonverse\n- **Location:** Hyderabad, Telangana\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop\n",
+    "apply_url": "https://unstop.com/jobs/frontend-developer-eonverse-1634859",
+    "source": "Unstop (Eonverse)",
+    "age": "Active Now",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
+    "tags": [
+      "Unstop",
+      "Campus Hiring"
+    ],
+    "sem_key": "eonverse@@frontend developer",
+    "id": "unstop_13"
+  },
+  {
+    "company_name": "Research Engine",
+    "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-EF22R9gUhs1613055244NYRD5QpyvT.png",
+    "title": "Frontend Developer",
+    "type": "JOB",
+    "location": "Navi Mumbai, Maharashtra",
+    "experience_min": 0,
+    "experience_max": 1,
+    "experience_label": "Fresher / 0–1 YOE",
+    "stipend_or_salary": "Competitive / Market standard",
+    "description": "### About the Opportunity (via Unstop)\n**Research Engine** is actively hiring for **Frontend Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Navi Mumbai, Maharashtra**.\n\n### Key Details\n- **Role:** Frontend Developer\n- **Company:** Research Engine\n- **Location:** Navi Mumbai, Maharashtra\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop\n",
+    "apply_url": "https://unstop.com/jobs/frontend-developer-research-engine-1642518",
+    "source": "Unstop (Research Engine)",
+    "age": "Active Now",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
+    "tags": [
+      "Unstop",
+      "Campus Hiring"
+    ],
+    "sem_key": "researchengine@@frontend developer",
+    "id": "unstop_12"
+  },
+  {
+    "company_name": "Unstop",
+    "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/partners75/698e2ae4cd044_Unstop-Logo-Blue-Large.png",
+    "title": "Frontend Engineer",
+    "type": "JOB",
+    "location": "Delhi, Delhi",
+    "experience_min": 0,
+    "experience_max": 1,
+    "experience_label": "Fresher / 0–1 YOE",
+    "stipend_or_salary": "Competitive / Market standard",
+    "description": "### About the Opportunity (via Unstop)\n**Unstop** is actively hiring for **Frontend Engineer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Delhi, Delhi**.\n\n### Key Details\n- **Role:** Frontend Engineer\n- **Company:** Unstop\n- **Location:** Delhi, Delhi\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop\n",
+    "apply_url": "https://unstop.com/jobs/crp-frontend-engineer-unstop-1607433",
+    "source": "Unstop (Unstop)",
+    "age": "Active Now",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
+    "tags": [
+      "Unstop",
+      "Campus Hiring"
+    ],
+    "sem_key": "unstop@@frontend engineer",
+    "id": "unstop_11"
+  },
+  {
+    "company_name": "Revalsys Technologies Pvt. Ltd.",
+    "company_logo_url": null,
+    "title": "Frontend Developer",
+    "type": "JOB",
+    "location": "Hyderabad, Telangana",
+    "experience_min": 0,
+    "experience_max": 1,
+    "experience_label": "Fresher / 0–1 YOE",
+    "stipend_or_salary": "Competitive / Market standard",
+    "description": "### About the Opportunity (via Unstop)\n**Revalsys Technologies Pvt. Ltd.** is actively hiring for **Frontend Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Hyderabad, Telangana**.\n\n### Key Details\n- **Role:** Frontend Developer\n- **Company:** Revalsys Technologies Pvt. Ltd.\n- **Location:** Hyderabad, Telangana\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop\n",
+    "apply_url": "https://unstop.com/jobs/frontend-developer-revalsys-technologies-pvt-ltd-1681875",
+    "source": "Unstop (Revalsys Technologies Pvt. Ltd.)",
+    "age": "Active Now",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
+    "tags": [
+      "Unstop",
+      "Campus Hiring"
+    ],
+    "sem_key": "revalsys@@frontend developer",
+    "id": "unstop_10"
+  },
+  {
+    "company_name": "Stellaris Infinite",
+    "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-uXEniHRY9211113757JJgXs8EZ9T.png",
+    "title": "Frontend Engineer",
+    "type": "JOB",
+    "location": "Cochin, Kerala",
+    "experience_min": 0,
+    "experience_max": 1,
+    "experience_label": "Fresher / 0–1 YOE",
+    "stipend_or_salary": "Competitive / Market standard",
+    "description": "### About the Opportunity (via Unstop)\n**Stellaris Infinite** is actively hiring for **Frontend Engineer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Cochin, Kerala**.\n\n### Key Details\n- **Role:** Frontend Engineer\n- **Company:** Stellaris Infinite\n- **Location:** Cochin, Kerala\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop\n",
+    "apply_url": "https://unstop.com/jobs/frontend-engineer-stellaris-infinite-1699950",
+    "source": "Unstop (Stellaris Infinite)",
+    "age": "Active Now",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
+    "tags": [
+      "Unstop",
+      "Campus Hiring"
+    ],
+    "sem_key": "stellarisinfinite@@frontend engineer",
+    "id": "unstop_9"
+  },
+  {
+    "company_name": "ITSpectrum Solutions Pvt. Ltd.",
+    "company_logo_url": null,
+    "title": "Frontend Developer",
+    "type": "JOB",
+    "location": "Kolkata, West Bengal",
+    "experience_min": 0,
+    "experience_max": 1,
+    "experience_label": "Fresher / 0–1 YOE",
+    "stipend_or_salary": "Competitive / Market standard",
+    "description": "### About the Opportunity (via Unstop)\n**ITSpectrum Solutions Pvt. Ltd.** is actively hiring for **Frontend Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Kolkata, West Bengal**.\n\n### Key Details\n- **Role:** Frontend Developer\n- **Company:** ITSpectrum Solutions Pvt. Ltd.\n- **Location:** Kolkata, West Bengal\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop\n",
+    "apply_url": "https://unstop.com/jobs/frontend-developer-itspectrum-solutions-pvt-ltd-1718093",
+    "source": "Unstop (ITSpectrum Solutions Pvt. Ltd.)",
+    "age": "Active Now",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
+    "tags": [
+      "Unstop",
+      "Campus Hiring"
+    ],
+    "sem_key": "itspectrum@@frontend developer",
+    "id": "unstop_8"
+  },
+  {
+    "company_name": "Persist Ventures",
+    "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/partners75/687f7c0f89347_pv.jpeg",
+    "title": "Frontend Engineer",
+    "type": "JOB",
+    "location": "India (Pan-India)",
+    "experience_min": 0,
+    "experience_max": 1,
+    "experience_label": "Fresher / 0–1 YOE",
+    "stipend_or_salary": "Competitive / Market standard",
+    "description": "### About the Opportunity (via Unstop)\n**Persist Ventures** is actively hiring for **Frontend Engineer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **India (Pan-India)**.\n\n### Key Details\n- **Role:** Frontend Engineer\n- **Company:** Persist Ventures\n- **Location:** India (Pan-India)\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop\n",
+    "apply_url": "https://unstop.com/jobs/frontend-engineer-persist-ventures-1727498",
+    "source": "Unstop (Persist Ventures)",
+    "age": "Active Now",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
+    "tags": [
+      "Unstop",
+      "Campus Hiring"
+    ],
+    "sem_key": "persistventures@@frontend engineer",
+    "id": "unstop_7"
+  },
+  {
+    "company_name": "Globose Systems and Solution Pvt. Ltd.",
+    "company_logo_url": null,
+    "title": "Frontend & Backend Software Developer",
+    "type": "JOB",
+    "location": "Bangalore, Karnataka",
+    "experience_min": 0,
+    "experience_max": 1,
+    "experience_label": "Fresher / 0–1 YOE",
+    "stipend_or_salary": "Competitive / Market standard",
+    "description": "### About the Opportunity (via Unstop)\n**Globose Systems and Solution Pvt. Ltd.** is actively hiring for **Frontend & Backend Software Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Bangalore, Karnataka**.\n\n### Key Details\n- **Role:** Frontend & Backend Software Developer\n- **Company:** Globose Systems and Solution Pvt. Ltd.\n- **Location:** Bangalore, Karnataka\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop\n",
+    "apply_url": "https://unstop.com/jobs/front-end-back-end-software-developer-globose-systems-and-solution-pvt-ltd-1774618",
+    "source": "Unstop (Globose Systems and Solution Pvt. Ltd.)",
+    "age": "Active Now",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
+    "tags": [
+      "Unstop",
+      "Campus Hiring"
+    ],
+    "sem_key": "globoseandsolution@@frontend & backend software developer",
+    "id": "unstop_6"
+  },
+  {
+    "company_name": "TECHSPAR SOLUTIONS",
+    "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-8U6no2lI9b1972223123wJZLwVkrKr.png",
+    "title": "Frontend Developer",
+    "type": "JOB",
+    "location": "New Delhi, Delhi",
+    "experience_min": 0,
+    "experience_max": 1,
+    "experience_label": "Fresher / 0–1 YOE",
+    "stipend_or_salary": "Competitive / Market standard",
+    "description": "### About the Opportunity (via Unstop)\n**TECHSPAR SOLUTIONS** is actively hiring for **Frontend Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **New Delhi, Delhi**.\n\n### Key Details\n- **Role:** Frontend Developer\n- **Company:** TECHSPAR SOLUTIONS\n- **Location:** New Delhi, Delhi\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop\n",
+    "apply_url": "https://unstop.com/jobs/frontend-developer-techspar-solutions-1817946",
+    "source": "Unstop (TECHSPAR SOLUTIONS)",
+    "age": "Active Now",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
+    "tags": [
+      "Unstop",
+      "Campus Hiring"
+    ],
+    "sem_key": "techspar@@frontend developer",
+    "id": "unstop_5"
+  },
+  {
+    "company_name": "VMax Wellness",
+    "company_logo_url": "https://media.licdn.com/dms/image/v2/C560BAQEUStsYCt2gKA/company-logo_100_100/company-logo_100_100/0/1660822582168/vmax_fit_logo?e=2147483647&v=beta&t=ljO_O0B6nHb2n1dkOP3u8GLeQGawnpCw-W6GdZGnzkU",
+    "title": "Full Stack Developer - Freshers - Onsite",
+    "type": "JOB",
+    "location": "Coimbatore, Tamil Nadu, India",
+    "experience_min": 0,
+    "experience_max": 1,
+    "experience_label": "Fresher (0-1 yrs)",
+    "stipend_or_salary": "Competitive / Market standard",
+    "description": "About VMax\nVMax Health Tech is a dynamic, innovative startup revolutionising the health and wellness industry. Our flagship product, FitMom Club, delivers personalized fitness and wellness solutions to mothers worldwide. We are a passionate team committed to creating impactful digital experiences and fostering a culture of continuous learning and growth.\nJob Description\nWe are seeking enthusiastic Fresher Full Stack Developers who have completed a recognized Full Stack Development certification and are eager to begin their career in software development. The ideal candidate should have strong programming fundamentals, hands-on exposure through academic, certification, internship, or personal projects, and a willingness to learn and contribute to real-world products.\nRoles And Responsibilities\nDevelop and maintain web application features using React and Node.js under senior developer guidance\nBuild responsive user interfaces with HTML, CSS, JavaScript, and React\nDevelop and integrate RESTful APIs using Node.js and Express.js\nWork with MySQL databases (queries, data models, CRUD operations)\nCollaborate with product managers, designers, QA engineers, and developers\nWrite clean, reusable, and maintainable code following best practices\nParticipate in code reviews, testing, debugging, and issue resolution\nUse Git for source-code management and collaboration\nSupport integration between backend services and web/mobile applications\nDocument code, APIs, and development work\nContinuously learn new technologies, frameworks, and practices\nEligibility\nFresh graduates / entry-level candidates are welcome\nBachelor's degree in computer science, IT, Engineering, Computer Applications, or related field\nFull Stack Development certification is mandatory\nAt least one full stack project completed (certification, internship, academics, or personal)\nInternship or practical project exposure preferred\nRequired Skills\nGood understanding of HTML, CSS, JavaScript\nBasic to intermediate knowledge of React.js\nBasic knowledge of Node.js and Express.js\nUnderstanding of relational databases (MySQL)\nBasic knowledge of REST APIs and client-server architecture\nFamiliarity with Git/version control\nStrong programming fundamentals, logical thinking, and problem-solving ability\nAbility to debug basic frontend and backend issues\nGood communication skills and teamwork\nStrong learning attitude, ownership, and attention to detail\nPreferred / Added Advantage\nExposure to TypeScript\nKnowledge of MongoDB or Firebase\nExposure to AWS, Azure, or Google Cloud\nBasic understanding of CI/CD, Docker, deployment processes\nFamiliarity with Agile/Scrum development\nUnderstanding of UI/UX principles and responsive design\nExposure to mobile application backend integration\nParticipation in hackathons, coding challenges, open-source projects\nPassion for health, fitness, and consumer-focused digital products\nCertification Requirement\nCandidates must have completed a Full Stack Development certification from a recognized training institute, learning platform, university, or equivalent program. The certification should include practical exposure to frontend, backend, databases, APIs, and project development.\nCulture And Commitment To Inclusion\nAt VMax Health Tech, we foster an inclusive, diverse, and fair workplace where every team member feels valued and respected. We believe diversity drives innovation and strengthens our ability to serve clients.\nWhy Join Us?\nKickstart your software development career with live product experience\nLearn directly from experienced developers and product teams\nGain hands-on exposure across frontend, backend, databases, APIs, and deployment\nWork in a collaborative and supportive startup environment\nOpportunities for professional growth and career advancement\nCompetitive salary and benefits package\nMake a meaningful impact on products used by real customers\nSkills: codings,problem solving,communication",
+    "apply_url": "https://www.linkedin.com/jobs/view/4463243315",
+    "source": "LinkedIn (VMax Wellness)",
+    "age": "Recent",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
+    "tags": [
+      "LinkedIn",
+      "JavaScript",
+      "TypeScript",
+      "React",
+      "Node.js",
+      "MySQL",
+      "MongoDB"
+    ],
+    "sem_key": "vmaxwellness@@full stack developer onsite",
+    "id": "lkd_4"
+  },
+  {
+    "company_name": "ReliaQuest",
+    "company_logo_url": "https://media.licdn.com/dms/image/v2/D4E0BAQEmuV7QzV2A8g/company-logo_100_100/company-logo_100_100/0/1714568863543/reliaquest_logo?e=2147483647&v=beta&t=CgmFfUMgur6QXJ74s5YHnmBH3_7UBGRM7UUWcQySwW4",
+    "title": "Associate Software Engineer",
+    "type": "JOB",
+    "location": "Pune/Pimpri-Chinchwad Area",
+    "experience_min": 0,
+    "experience_max": 1,
+    "experience_label": "Fresher (0-1 yrs)",
+    "stipend_or_salary": "Competitive / Market standard",
+    "description": "Why it’s worth it:\nAre you a passionate Software Engineer who has a proven track record of solving complex problems and being at the forefront of innovation? Pursuing a career at ReliaQuest will allow you to write code and manipulate data in ways that have never been done before, driving automation of threat detection and response for one of the world’s fastest growing industries. You will lead the creation, testing, and deployment of cutting-edge security technology to enterprise customers across the globe. Above all else, this role will allow you to work and learn from some of the most talented people in the business as well as have a direct contribution to the growth and success of RQ.\nThe everyday hustle:\nResearch and develop creative solutions across a wide range of cutting-edge technologies to continuously evolve our platform, GreyMatter.\nCreate REST API’s and integrations between various products to improve and automate our customer’s threat detection.\nManage the continuous integration and deployment processes of complex technologies.\nPerform code reviews to ensure consistent improvement.\nProactively automate and improve all stages of the software development lifecycle.\nInterface closely with various parts of the business, both internally and externally, to ensure all users are leveraging the product with ease and to its full potential.\nProvide support to other team members as well as cultivate a culture of constant collaboration.\nDo you have what it takes?\n0-1 Years of Software Development experience in the following: Java, Spring Boot, and developing in a microservices architecture.\nWhat makes you uncommon?\nHands on experience with one or more of the following technologies (Elasticsearch, Kafka, Apache Spark, Logstash, Hadoop/hive, Tensorflow, Kibana, Athena/Presto/BigTable, Angular, React).\nExperience with cloud platforms such as AWS, GCP, or Azure.\nSolid understanding of unit testing, continuous integration and deployment practices.\nExperience with Agile Methodology.\nHigher education/relevant certifications.",
+    "apply_url": "https://www.linkedin.com/jobs/view/4441295095",
+    "source": "LinkedIn (ReliaQuest)",
+    "age": "Recent",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
+    "tags": [
+      "LinkedIn",
+      "Java",
+      "React",
+      "Angular",
+      "Spring Boot",
+      "AWS",
+      "Azure"
+    ],
+    "sem_key": "reliaquest@@associate software engineer",
+    "id": "lkd_3"
+  },
+  {
+    "company_name": "Bristlecone",
+    "company_logo_url": "https://media.licdn.com/dms/image/v2/D4E0BAQF_r37iLeLbVw/company-logo_100_100/B4EaE9yw3tJcAI-/0/1792038080218/bristlecone_logo?e=2147483647&v=beta&t=_H6vLbU6YklWlZEQgXoVzAkJXbGavNuyaWDeXvA_mPE",
+    "title": "Associate Software Engineer",
+    "type": "JOB",
+    "location": "Pune Division, Maharashtra, India",
+    "experience_min": 0,
+    "experience_max": 1,
+    "experience_label": "Fresher (0-1 yrs)",
+    "stipend_or_salary": "Competitive / Market standard",
+    "description": "Job Description\nBristlecone India Limited is looking for a motivated Associate Software Engineer to join our team. You will design, develop, and maintain scalable Python applications and APIs that support our SAP S4 HANA initiatives. Working closely with functional consultants and cross‑functional teams, you will translate business requirements into robust technical solutions while adhering to best coding practices and quality standards.\nResponsibilities\nDevelop, test, and maintain Python‑based applications and RESTful APIs supporting S4 HANA processes.\nWrite clean, efficient, and reusable code following coding standards and best practices.\nCollaborate with functional consultants, business analysts, and other developers to gather requirements and deliver solutions.\nDebug, troubleshoot, and optimize application performance and resource utilization.\nIntegrate with relational (MySQL, PostgreSQL) and NoSQL (MongoDB) databases for data storage and retrieval.\nParticipate in code reviews, design discussions, and knowledge‑sharing sessions.\nCreate and maintain technical documentation, including API specs and deployment guides.\nSupport application deployment, monitoring, and maintenance using Git and CI/CD pipelines.\nAssist in containerization efforts using Docker and cloud platforms (AWS/Azure/GCP).\nAdopt Agile development practices and contribute to sprint planning and retrospectives.\nQualifications\nBachelor's degree in Computer Science, IT, Engineering or related field (MCA acceptable).\nStrong programming skills in Python with solid OOP fundamentals.\nExperience building and consuming RESTful APIs and web services.\nProficiency with SQL and databases such as MySQL, PostgreSQL, or MongoDB.\nFamiliarity with version control systems, especially Git.\nUnderstanding of data structures, algorithms, and problem‑solving techniques.\nExposure to Python frameworks like Django, Flask, or FastAPI (preferred).\nBasic knowledge of cloud platforms (AWS, Azure, or GCP) and Docker containers.\nExperience with Agile methodologies and CI/CD pipelines (preferred).\nExcellent communication, teamwork, and a willingness to learn new technologies.\nAbout Us\nABOUT US\nBristlecone is the leading provider of AI-powered application transformation services for the connected supply chain. We empower our customers with speed, visibility, automation, and resiliency – to thrive on change.\nOur transformative solutions in Digital Logistics, Cognitive Manufacturing, Autonomous Planning, Smart Procurement and Digitalization are positioned around key industry pillars and delivered through a comprehensive portfolio of services spanning digital strategy, design and build, and implementation across a range of technology platforms.\nBristlecone is ranked among the top ten leaders in supply chain services by Gartner. We are headquartered in San Jose, California, with locations across North America, Europe and Asia, and over 2,500 consultants. Bristlecone is part of the $19.4 billion Mahindra Group.\nEqual Opportunity Employer\nBristlecone is an equal opportunity employer. All applicants will be considered for employment without attention to race, color, religion, sex, sexual orientation, gender identity, national origin, veteran or disability status .\nInformation Security Responsibilities\nUnderstand and adhere to Information Security policies, guidelines and procedure, practice them for protection of organizational data and Information System.\nTake part in information security training and act while handling information.\nReport all suspected security and policy breach to InfoSec team or appropriate authority (CISO).\nUnderstand and adhere to the additional information security responsibilities as part of the assigned job role.",
+    "apply_url": "https://www.linkedin.com/jobs/view/4494623608",
+    "source": "LinkedIn (Bristlecone)",
+    "age": "Recent",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
+    "tags": [
+      "LinkedIn",
+      "Python",
+      "Django",
+      "Flask",
+      "FastAPI",
+      "SQL",
+      "PostgreSQL"
+    ],
+    "sem_key": "bristlecone@@associate software engineer",
+    "id": "lkd_2"
+  },
+  {
+    "company_name": "Cin7",
+    "company_logo_url": "https://media.licdn.com/dms/image/v2/D560BAQFV_ovVefEBaA/company-logo_100_100/company-logo_100_100/0/1719922622513/cin7_logo?e=2147483647&v=beta&t=6FmqpzOw5Y-seoWsLJ5-Q-nbT1MINXxEzv1QHM5QDiA",
+    "title": "Junior Software Engineer",
+    "type": "JOB",
+    "location": "Pune Division, Maharashtra, India",
+    "experience_min": 0,
+    "experience_max": 1,
+    "experience_label": "Fresher (0-1 yrs)",
+    "stipend_or_salary": "Competitive / Market standard",
+    "description": "Cin7 is a fast-growing global software company that provides solutions for modern-day product sellers. We help these sellers keep track of their inventory at scale, and help them sell their products across multiple sales channels around the world.\nCin7 is expanding very quickly with a mission to become the leading Inventory Management Software brand in the world, and we are looking for a motivated and driven individual to join the team.\nCin7 India is proud of our culture and has been officially recognised with Great Place to Work® Certification™.\nHow You'll Make An Impact\nAt Cin7, we are transforming the way businesses manage inventory, sales, and operations to make it cheaper, faster, and easier for businesses all over the world to get their products into their customers’ hands.\nWe’re looking for a Junior Software Engineer to join our engineering team and grow with us. This role focuses on .NET development across .NET Framework, .NET, and ASP.NET MVC applications, with some frontend work using JavaScript, HTML, and CSS. You’ll work on our cloud-based SaaS inventory management software, learn from experienced engineers, and use AI tools to help you work faster and build stronger skills.\nThis position requires that you reside in Ahmedabad or Pune, India.\nApplying for this role:\nPlease apply through our careers page so your application is reviewed by our Talent Acquisition team. If you have a genuine connection to someone at Cin7 and they choose to refer you, that's welcome. Please don't send unsolicited connection requests or messages to employees asking for referrals, as this creates extra work for our team and may result in your application not being considered.\nWhat You'll Do\nBuild and maintain features in our cloud-based SaaS inventory management software using .NET technologies.\nWork across the application, database, and frontend layers, including writing API-driven features, writing SQL queries, making UI updates, and working with forms and page layouts.\nUse AI tools to support code generation, debugging, testing, and code review, while ensuring you understand, validate, and take responsibility for the code you contribute.\nCollaborate with product managers, designers, and other developers to understand requirements and deliver solutions.\nWrite and maintain unit and integration tests for the features you build.\nParticipate in code reviews by reviewing other devs' code, learning from feedback, and gradually developing the ability to identify potential issues and suggest improvements.\nLearn from senior engineers and grow toward taking on more complex, end-to-end work over time.\nParticipate in the exploration and implementation of AI-powered features alongside senior engineers.\nWhat You'll Bring\nA bachelor’s degree in Computer Science, Engineering, or a related field, or equivalent professional experience.\nSome practical experience with software development through internships, personal projects, university projects, or professional work.\nHands-on experience with C# and .NET, including ASP.NET MVC or .NET Framework applications.\nFamiliarity with AI-powered development tools and an interest in using them to improve productivity and code quality.\nWorking knowledge of SQL, including writing queries and working with relational databases such as SQL Server.\nUnderstanding of HTML, CSS, and JavaScript, including DOM manipulation and working with API responses.\nFamiliarity with web fundamentals, including HTTP, REST APIs, and client-server communication.\nBasic understanding of unit testing and version control with Git.\nStrong communication skills and a willingness to ask questions and learn.\nIt's a Nice To Have If You Bring\nExperience building or integrating AI or LLM-powered features, such as calling LLM APIs or working with retrieval-based workflows.\nExperience on cloud-based SaaS products, particularly on Microsoft Azure.\nExposure to CI/CD pipelines or agile development environments.\nWhy work at Cin7?\nWe are a fast growing business going through a huge amount of growth.\nYou’ll have the opportunity to work on products that are used by our global customer-base and at the same time you’ll be growing your career and developing new skills.\nHybrid work environment\nWork From Anywhere for 30 days in a six month period\nCelebrate your birthday with a paid day off\nA Global Cin7 Day celebrated companywide, providing you a dedicated holiday to focus on your own wellbeing.\nRecruitment referral bonus\nWork for a Great Place to Work®\nWhy CIN7?\nCIN7 is a leader in one of the most exciting software verticals right now, and we're growing exponentially. We're looking to add people to our team who are passionate about working with a fast growth tech company.\nAt CIN7, we make great products available to everyone. Every month, millions of sales orders flow through our platform reducing the cost, effort and time for product sellers so they can quickly get products to customers and build their brands without worrying about their operations. We pride ourselves on providing Inventory Management and Supply Chain software to help medium-large product businesses thrive in a highly competitive, digital world. CIN7 centrally manages inventory across multiple locations and channels, connecting 500+ systems to support receiving, selling and shipping stock.\nWe value diversity at Cin7, and bring people into the heart of everything we do. We hire, recruit, and promote without regard to race, color, religion, sex, sexual orientation, gender identity or expression, national origin, pregnancy or maternity, veteran status or any other status protected by applicable law. We understand the importance of creating a safe and comfortable work environment and encourage individualism and authenticity in every member of our team.\nWe may use artificial intelligence (AI) tools to support parts of the hiring process, such as reviewing applications, analyzing resumes, or assessing responses and identifying potential inconsistencies or verification signals in application materials based on available information. These tools assist our recruitment team but do not replace human judgment. Final hiring decisions are ultimately made by humans. If you would like more information about how your data is processed, please contact us.",
+    "apply_url": "https://www.linkedin.com/jobs/view/4487044689",
+    "source": "LinkedIn (Cin7)",
+    "age": "Recent",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
+    "tags": [
+      "LinkedIn",
+      ".NET",
+      "JavaScript",
+      "SQL",
+      "Azure",
+      "Git",
+      "AI"
+    ],
+    "sem_key": "cin7@@junior software engineer",
+    "id": "lkd_1"
+  },
   {
     "company_name": "Larsen & Toubro",
     "company_logo_url": "https://media.licdn.com/dms/image/v2/C4D0BAQFnEYpR8MlYsA/company-logo_100_100/company-logo_100_100/0/1631300737624?e=2147483647&v=beta&t=XwrPkxNIwc_l-G-D6Dfak1uo1oK-wEZfcwpUN3QD9WQ",
