@@ -34,6 +34,7 @@ export interface JobListingFilters {
   search?: string;
   sortBy?: JobSortOption;
   closingSoonOnly?: boolean;
+  highCtcOnly?: boolean;
 }
 
 export type JobReportStatus = 'OPEN' | 'RESOLVED' | 'DISMISSED';

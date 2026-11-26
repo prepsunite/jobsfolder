@@ -6,7 +6,7 @@ import {
   ExternalLink, Clock, Calendar, Tag, Loader2, InboxIcon, Bookmark,
   Share2, Code, Check, Building2, GraduationCap, ArrowRight,
   CheckCircle2, Flame, Award, Eye, AlertCircle, Globe, RotateCcw,
-  ThumbsUp, ThumbsDown, ShieldCheck
+  ThumbsUp, ThumbsDown, ShieldCheck, Sparkles
 } from 'lucide-react';
 import { jobsService } from '@/services/jobs.service';
 import { bookmarkStore } from '@/services/stores/bookmarkStore';
@@ -130,6 +130,93 @@ function expMatchesFilter(
   // 0-2 (0-1 yr Early Career): Open to candidates with up to 1 year of experience
   if (level === '0-2') return min <= 1 && (!max || max <= 1);
   return true;
+}
+
+// ─── High-Paying & Premier Tier Job Intelligence ─────────────────────────────
+
+export function isHighPayingOrPremierJob(
+  job: JobListing | { company_name?: string; stipend_or_salary?: string | null; tags?: string[] } | null | undefined
+): boolean {
+  if (!job) return false;
+
+  // 1. Tags check (HFT, Quant, Frontier AI, High CTC, Premier)
+  const tagsLower = (job.tags || []).map((t) => (t || '').toLowerCase());
+  if (
+    tagsLower.some(
+      (t) =>
+        t.includes('hft') ||
+        t.includes('quant') ||
+        t.includes('frontier ai') ||
+        t.includes('high ctc') ||
+        t.includes('premier ctc') ||
+        t.includes('tier-1')
+    )
+  ) {
+    return true;
+  }
+
+  // 2. Curated Premier Companies (HFT, Quant, Frontier AI labs, Tier-1 Big Tech)
+  const PREMIER_COMPANIES = [
+    'tower research',
+    'jane street',
+    'jump trading',
+    'worldquant',
+    'imc trading',
+    'imc',
+    'point72',
+    'virtu financial',
+    'flow traders',
+    'de shaw',
+    'databricks',
+    'anthropic',
+    'scale ai',
+    'cognition ai',
+    'cognition',
+    'cohere',
+    'brex',
+    'roblox',
+    'lyft',
+    'stripe',
+    'rubrik',
+    'datadog',
+    'nvidia',
+    'google',
+    'microsoft',
+    'amazon',
+    'apple',
+    'meta',
+    'netflix',
+    'salesforce',
+    'adobe',
+    'cisco',
+    'mastercard',
+    'uber',
+    'atlassian',
+    'supabase',
+    'cursor',
+    'perplexity',
+    'goldman sachs',
+    'morgan stanley',
+    'cred',
+    'marvell',
+  ];
+  const compNorm = (job.company_name || '').toLowerCase().trim();
+  if (PREMIER_COMPANIES.some((p) => compNorm.includes(p) || p.includes(compNorm))) {
+    return true;
+  }
+
+  // 3. High Salary check (>= 18 LPA or USD or Crore)
+  const sal = (job.stipend_or_salary || '').toLowerCase();
+  if (sal.includes('$') || sal.includes('usd') || sal.includes('crore') || sal.includes('cr')) {
+    return true;
+  }
+  const lpaMatch = sal.match(/(\d+(?:\.\d+)?)\s*(?:-|to)?\s*(\d+(?:\.\d+)?)?\s*lpa/);
+  if (lpaMatch) {
+    const val = parseFloat(lpaMatch[1]);
+    if (val >= 18) return true;
+  }
+
+  return false;
 }
 
 // ─── Location & Geographic Intelligence ──────────────────────────────────────
@@ -550,6 +637,7 @@ function JobCard({
   }, [expCheck]);
   const relativeTime = useMemo(() => getRelativeTime(job.created_at), [job.created_at]);
   const deadline = useMemo(() => getDeadlineInfo(job.deadline), [job.deadline]);
+  const isHighPay = useMemo(() => isHighPayingOrPremierJob(job), [job]);
 
   return (
     <div
@@ -580,6 +668,8 @@ function JobCard({
           ? 'border border-rose-300 dark:border-rose-800/80 ring-1 ring-rose-500/20 hover:shadow-md'
           : isAdminView && adminVote === 'UP'
           ? 'border border-emerald-200 dark:border-emerald-900/60 hover:shadow-md'
+          : isHighPay
+          ? 'border-2 border-amber-400 dark:border-amber-500/80 ring-2 ring-amber-400/25 dark:ring-amber-500/20 bg-gradient-to-br from-amber-500/[0.03] via-transparent to-amber-500/[0.02] shadow-xs hover:border-amber-500 hover:ring-amber-500/40 hover:shadow-md'
           : 'border border-[#E9ECEF] dark:border-[#242424] hover:border-zinc-400 dark:hover:border-zinc-600 hover:shadow-md'
       }`}
     >
@@ -608,6 +698,12 @@ function JobCard({
                   <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[9px] font-bold uppercase tracking-wider bg-amber-400 text-amber-950 border border-amber-500 shadow-2xs">
                     <Star className="w-2.5 h-2.5 fill-current" />
                     Featured
+                  </span>
+                )}
+                {isHighPay && (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wider bg-gradient-to-r from-amber-400/20 to-orange-400/20 text-amber-800 dark:text-amber-300 border border-amber-400/40 shadow-2xs">
+                    <Sparkles className="w-2.5 h-2.5 text-amber-500 fill-amber-500" />
+                    Top Tier Pay
                   </span>
                 )}
               </div>
@@ -1522,6 +1618,11 @@ export default function JobsPage() {
       // Experience filter
       if (!expMatchesFilter(job.experience_min, job.experience_max, filters.expLevel, job.title, job.description)) return false;
 
+      // High CTC / Premier Tier Filter
+      if (filters.highCtcOnly && !isHighPayingOrPremierJob(job)) {
+        return false;
+      }
+
       // Admin triage filter (Admin-only)
       if (isEffectiveAdmin && adminReviewFilter !== 'ALL') {
         const vote = adminVotes[job.id];
@@ -1544,8 +1645,16 @@ export default function JobsPage() {
         if (!b.deadline) return -1;
         return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
       }
-      // RECOMMENDED: featured first, then sort_order, then newest
+      // RECOMMENDED:
+      // 1. Featured jobs first
       if (a.is_featured !== b.is_featured) return a.is_featured ? -1 : 1;
+
+      // 2. High-Paying / Premier Tier (HFT, Quant, Frontier AI, Tier-1 Big Tech) boosted to top!
+      const aHigh = isHighPayingOrPremierJob(a);
+      const bHigh = isHighPayingOrPremierJob(b);
+      if (aHigh !== bHigh) return aHigh ? -1 : 1;
+
+      // 3. sort_order, then newest
       if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order;
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
@@ -1679,6 +1788,7 @@ export default function JobsPage() {
     (filters.expLevel && filters.expLevel !== 'ANY') ||
     (filters.tag && filters.tag !== 'ALL') ||
     Boolean(filters.closingSoonOnly) ||
+    Boolean(filters.highCtcOnly) ||
     savedOnly ||
     (isEffectiveAdmin && adminReviewFilter !== 'ALL');
 
@@ -1692,6 +1802,7 @@ export default function JobsPage() {
       search: '',
       sortBy: 'RECOMMENDED',
       closingSoonOnly: false,
+      highCtcOnly: false,
     });
     setSavedOnly(false);
     setAdminReviewFilter('ALL');
@@ -1853,6 +1964,20 @@ export default function JobsPage() {
             </select>
             <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 opacity-60" />
           </div>
+
+          {/* High CTC / Top Tier Filter */}
+          <button
+            type="button"
+            onClick={() => setFilters((f) => ({ ...f, highCtcOnly: !f.highCtcOnly }))}
+            className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+              filters.highCtcOnly
+                ? 'bg-amber-500 text-white border-amber-500 shadow-2xs font-bold'
+                : 'bg-white dark:bg-[#141414] text-[#495057] dark:text-[#AAAAAA] border-[#E9ECEF] dark:border-[#2A2A2A] hover:border-amber-400'
+            }`}
+          >
+            <Sparkles className={`w-3.5 h-3.5 ${filters.highCtcOnly ? 'text-white' : 'text-amber-500 fill-amber-500'}`} />
+            <span>High CTC (₹20L+)</span>
+          </button>
 
           {/* Closing Soon Toggle */}
           <button
