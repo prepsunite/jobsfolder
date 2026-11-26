@@ -241,7 +241,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
   },
   {
     "company_name": "ITSpectrum Solutions Pvt. Ltd.",
-    "company_logo_url": null,
+    "company_logo_url": "https://www.google.com/s2/favicons?domain=itspectrumsolutions.com&sz=128",
     "title": "Frontend Developer",
     "type": "JOB",
     "location": "Kolkata, West Bengal",
