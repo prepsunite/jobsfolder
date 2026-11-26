@@ -74,116 +74,6 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "id": "lkd_3"
   },
   {
-    "company_name": "HLE Glascoat Limited",
-    "company_logo_url": "https://media.licdn.com/dms/image/v2/C4D0BAQHMUPSNYRERPQ/company-logo_100_100/company-logo_100_100/0/1630573893348/hle_glascoat_limited_logo?e=2147483647&v=beta&t=Pc5bmFmnjgFOHotDU3FC-3pEFj8-3j4O9dzqzA3xQBA",
-    "title": "Graduate Engineering Trainee",
-    "type": "JOB",
-    "location": "Anand, Gujarat, India",
-    "experience_min": 0,
-    "experience_max": 1,
-    "experience_label": "Fresher (0-1 yrs)",
-    "stipend_or_salary": null,
-    "description": "Role Overview\nThe Graduate Engineer Trainee (GET) /Diploma Engineer Trainee will undergo structured training across assigned functions to gain hands-on technical and operational exposure. The role aims to develop young engineering professionals who can effectively support daily activities, process improvements, and cross functional coordination within the department.\nRole Context\nHLE Glascoat Limited is a leading manufacturer of process equipment for the chemical and pharmaceutical industries. We are market leaders in Filtration and Drying Equipment and are a leading manufacturer of Glass Lined Equipment globally. We manufacture a wide range of chemical processing equipment in an equally wide range of materials for some of the most demanding applications. We are introducing new products in the market to cater same set of customers. Over the last 40 years, our consistently high quality, and our commitment to solving our customers’ unique process requirements has helped us build a solid reputation as a preferred supplier of process equipment.\nRole Location\nAnand, Gujarat\nDeliverables\nAssist in day-to-day departmental operations under the guidance of senior team members.\nSupport in preparing reports, documentation, and data analysis relevant to departmental requirements.\nCoordinate with internal teams, vendors, and stakeholders for smooth workflow.\nParticipate in planning, monitoring, and execution of tasks related to projects or production activities.\nLearn and apply relevant tools, engineering concepts, and company processes.\nContribute to continuous improvement initiatives related to quality, productivity, and cost efficiency.\nEnsure adherence to safety, quality standards, and company policies during all activities.\nKey Skills & Competencies\nGood analytical and problem-solving abilities.\nStrong communication and coordination skills.\nProficiency in MS Office and basic engineering tools/software.\nDetail-oriented with strong documentation skills.\nAbility to adapt, follow instructions, and work in a team environment.\nNon-negotiables\nDiploma /B.E./B.Tech in Mechanical with no backlogs throughout the course\nStrong academic background and willingness to learn.",
-    "apply_url": "https://www.linkedin.com/jobs/view/4489755158",
-    "source": "LinkedIn (HLE Glascoat Limited)",
-    "age": "Recent",
-    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
-    "tags": [
-      "LinkedIn",
-      "Tier-1 Tech"
-    ],
-    "sem_key": "hleglascoat@@engineering trainee",
-    "id": "lkd_4"
-  },
-  {
-    "company_name": "GE HealthCare",
-    "company_logo_url": "https://media.licdn.com/dms/image/v2/D560BAQG30MejU_UygQ/company-logo_100_100/B56ZlzFxy6I0AQ-/0/1758572519588/gehealthcare_logo?e=2147483647&v=beta&t=nY-wpTVABSqcsPg_WG65-jSQQsWCROwqEEKlxai4V6g",
-    "title": "Graduate Engineer Trainee",
-    "type": "JOB",
-    "location": "Bengaluru, Karnataka, India",
-    "experience_min": 0,
-    "experience_max": 1,
-    "experience_label": "Fresher (0-1 yrs)",
-    "stipend_or_salary": null,
-    "description": "Job Description Summary\nThe Graduate Engineer Trainee (GET) will support the Manufacturing Process Engineering team in executing the Mitosis Program, a strategic manufacturing transfer and localization initiative. The role provides hands-on exposure to manufacturing engineering by supporting product transfer, process documentation, validation, equipment and fixture qualification, shop-floor execution, and operator training activities. Working under the guidance of experienced Manufacturing Process Engineers (MPEs), the GET will contribute to ensuring successful manufacturing readiness while developing strong technical and operational capabilities in a regulated manufacturing environment.\nGE HealthCare is a leading global medical technology and digital solutions innovator. Our purpose is to create a world where healthcare has no limits. Unlock your ambition, turn ideas into world-changing realities, and join an organization where every voice makes a difference, and every difference builds a healthier world.\nJob Description\nRoles and Responsibilities\nSupport the Manufacturing Process Engineering team in executing product transfer and manufacturing localization activities as part of the Mitosis Program.\nCreate, update, and maintain manufacturing process documentation, validation protocols, work instructions, qualification records, and other engineering documentation.\nAssist in planning and executing process validations, equipment qualifications, fixture qualifications, and manufacturing readiness activities.\nProvide hands-on shop-floor support during product transfer, validation, and production ramp-up activities.\nParticipate in process improvement initiatives focused on manufacturing efficiency, quality, and operational excellence.\nLearn manufacturing processes from experienced Manufacturing Process Engineers and apply established engineering practices during project execution.\nSupport training and qualification of newly hired manufacturing operators after completing the required technical training.\nAssist in verification of validation reports, qualification records, and engineering documentation to ensure accuracy and compliance.\nCollaborate with cross-functional teams including Manufacturing Engineering, Production, Quality, Supply Chain, and Operations to support project milestones.\nFollow Environment, Health & Safety (EHS), Quality, and regulatory requirements while executing assigned activities.\nContribute to Lean manufacturing and continuous improvement initiatives within the manufacturing environment.\nPerform execution-oriented engineering tasks while working under the technical guidance and approval of Manufacturing Process Engineers.\nRequired Qualifications\nBachelor's degree (B.E./B.Tech) in Mechanical Engineering, Electrical Engineering, Electronics Engineering, Mechatronics Engineering, or a related engineering discipline.\nRecent graduate or early-career engineer with a strong interest in manufacturing engineering.\nWillingness to work in a manufacturing shop-floor environment supporting validation, equipment qualification, and production activities.\nAbility to create and maintain technical documentation with strong attention to detail.\nStrong analytical and problem-solving skills.\nEffective verbal and written communication skills.\nAbility to work collaboratively in a cross-functional team environment.\nWillingness to learn manufacturing processes and support execution-focused engineering activities.\nDesired Characteristics\nExposure to manufacturing processes, industrial engineering, or production environments through academic projects or internships.\nBasic understanding of manufacturing process validation, documentation, or quality systems.\nFamiliarity with Lean Manufacturing or Continuous Improvement concepts.\nHands-on approach to learning and solving engineering challenges.\nStrong organizational and time management skills with the ability to manage multiple priorities.\nHigh attention to detail and commitment to quality.\nPositive attitude, learning agility, and willingness to take ownership of assigned tasks.\nAbility to adapt in a fast-paced manufacturing environment.\nInclusion and Diversity\nGE HealthCare is an Equal Opportunity Employer where inclusion matters. Employment decisions are made without regard to race, color, religion, national or ethnic origin, sex, sexual orientation, gender identity or expression, age, disability, protected veteran status or other characteristics protected by law.\nWe expect all employees to live and breathe our behaviors: to act with humility and build trust; lead with transparency; deliver with focus, and drive ownership – always with unyielding integrity.\nOur\ntotal rewards\nare designed to unlock your ambition by giving you the boost and flexibility you need to turn your ideas into world-changing realities. Our salary and benefits are everything you’d expect from an organization with global strength and scale, and you’ll be surrounded by career opportunities in a culture that fosters care, collaboration and support.\nDisclaimer:\nGE HealthCare will never ask for payment to process documents, refer you to a third party to process applications or visas, or ask you to pay costs. Never send money to anyone suggesting they can provide employment with GE HealthCare.\nAdditional Information\nRelocation Assistance Provided:\nNo",
-    "apply_url": "https://www.linkedin.com/jobs/view/4450243748",
-    "source": "LinkedIn (GE HealthCare)",
-    "age": "Recent",
-    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
-    "tags": [
-      "LinkedIn",
-      "Tier-1 Tech"
-    ],
-    "sem_key": "gehealthcare@@engineer trainee",
-    "id": "lkd_5"
-  },
-  {
-    "company_name": "Rotex Automation Limited",
-    "company_logo_url": "https://media.licdn.com/dms/image/v2/D560BAQFefasfiPTLsw/company-logo_100_100/B56aGSI0rrGgAI-/0/1793453149325/rotex_automation_limited_logo?e=2147483647&v=beta&t=w8QRzwZ5NeI0pf_kHd11K0_KTs6L7Nvp1Z5K5m0ZXIg",
-    "title": "Graduate Engineering Trainee",
-    "type": "JOB",
-    "location": "Vadodara, Gujarat, India",
-    "experience_min": 0,
-    "experience_max": 1,
-    "experience_label": "Fresher (0-1 yrs)",
-    "stipend_or_salary": null,
-    "description": "WE ARE HIRING | Graduate Engineer Trainees (GETs)\nCompany:\nRotex Automation Limited\nLocation:\nVadodara, Gujarat\nAre you a recent engineering graduate looking to kick-start your career in industrial automation?\nRotex Automation Limited is looking for enthusiastic, talented, and career-driven Graduate Engineer Trainees (GETs) to join our growing team.\nPosition:\nGraduate Engineer Trainee (GET)\nEligibility:\nB.E./B.Tech in Mechanical / Electrical / Electronics / Instrumentation / related engineering disciplines.\n2025 / 2026 pass-out candidates.\nGood academic record and technical fundamentals.\nStrong communication, analytical, and problem-solving skills.\nWillingness to learn and adapt to a professional work environment.\nKey Responsibilities:\nUnderstand engineering processes, products, and technical operations.\nAssist respective departments with day-to-day activities and projects.\nWork closely with experienced professionals and reporting managers.\nParticipate in technical training and development programmes.\nSupport process improvement and departmental initiatives.",
-    "apply_url": "https://www.linkedin.com/jobs/view/4492677377",
-    "source": "LinkedIn (Rotex Automation Limited)",
-    "age": "Recent",
-    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
-    "tags": [
-      "LinkedIn",
-      "Tier-1 Tech"
-    ],
-    "sem_key": "rotexautomation@@engineering trainee",
-    "id": "lkd_6"
-  },
-  {
-    "company_name": "Arabelle Solutions",
-    "company_logo_url": "https://media.licdn.com/dms/image/v2/D4E0BAQFS0AD5XZzzvw/company-logo_100_100/B4EZVM6k1WHMAQ-/0/1740752180112/arabellesolutions_logo?e=2147483647&v=beta&t=uzsfWj9mX69KTs6pwfPQUKdeu76e0W6507HvR9Hko68",
-    "title": "Graduate Engineer Trainee",
-    "type": "JOB",
-    "location": "Sanand, Gujarat, India",
-    "experience_min": 0,
-    "experience_max": 1,
-    "experience_label": "Fresher (0-1 yrs)",
-    "stipend_or_salary": null,
-    "description": "We are seeking a highly motivated and enthusiastic Graduate Engineering Trainee (GET) to join our Product Engineering Team (Turbine or Generator Teams). This role is ideal for fresh graduates with a Bachelor's degree in Mechanical Engineering or a related field who are eager to build their career at the intersection of engineering, manufacturing, and software automation.\nTo build our future, the best energy is ours!\nArabelle Solutions, part of the EDF Group, is a global leader in nuclear turbine island technologies, providing innovative low-carbon power solutions from the world’s most powerful operating steam turbine to modular SMR-optimized designs, along with generators, pumps, heat exchangers, and controls. Its technologies are used in one-third of nuclear power plants worldwide, supported by a team of 3,500 experts across 16 countries.\nOur cultural pillars define how we work together: Team, Expertise, Ownership.\nWe collaborate fully and value the spirit of teamwork, where every skill is recognized to create innovative and effective solutions. Guided by safety and integrity in all we do, we take ownership of our actions and results.\nEssential Responsibilities For The Role\nKey responsibilities include (but are not limited to): -\nLearn and adapt to the product engineering design and technologies that your are being asked/ exposed to.\nWork with CATIA V5 to create, modify, or automate engineering models, drawings and processes.\nPrepare MS Office documents, like word documents, Excel spreadsheets, release notes, customer documentation, etc.\nLearn about the manufacturing process of the technology that you are being exposed to and develop creative / optimized solutions of design,\nBiweekly submission of the progress reports to the mentors and highlight learnings and work forecast.\nIdentify opportunities of continuous improvement in your day to day activities.\nCollaborate with cross-functional engineering teams to understand requirements, gather customer pain points, and identify automation opportunities.\nGood communication skills and willingness to collaborate with multi-disciplinary teams.\nQuick learner with a proactive approach toward problem-solving.\nQualifications/Requirements\nBachelor’s degree in Mechanical Engineering, Production Engineering, Manufacturing Engineering, Mechatronics, or a related discipline.\nFamiliarity with MS Office 365 application suite.\nPreferred (Nice-to-Have) Skills\nUnderstanding of manufacturing processes or engineering workflows.\nInterest in digital transformation, automation, or engineering software.\nWho Should Apply?\nThis Role Is Perfect For Fresh Engineering Graduates Who\nEnjoy technical problem‑solving.\nAre Curious About The Intersection Of Mechanical Engineering\nWant to build a career in engineering and manufacturing.\nIn India, our presence spans Sanand (Gujarat), Noida (Uttar Pradesh), and Bengaluru (Karnataka), where our teams drive advanced manufacturing, precision engineering, and cutting-edge project delivery-underpin by our commitment to safety, integrity, and sustainability. Your work location will be Sanand.\nTo learn more about Arabelle Solutions’ footprint and the locations where we operate, please visit: https://www.arabellesolutions.com/ Join a committed team making a difference by delivering cutting-edge technologies in support of sustainable nuclear energy.\nAt Arabelle Solutions we offer a wide range of opportunities across functions, sites, and segments that promote your learning and growth. We value and develop initiative and expertise.\nAt Arabelle Solutions we are pragmatic, lean and focused. We are committed to continuous improvement – learning from our shortcomings\nBanding: OTHSAL",
-    "apply_url": "https://www.linkedin.com/jobs/view/4462209906",
-    "source": "LinkedIn (Arabelle Solutions)",
-    "age": "Recent",
-    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
-    "tags": [
-      "LinkedIn",
-      "Tier-1 Tech"
-    ],
-    "sem_key": "arabelle@@engineer trainee",
-    "id": "lkd_7"
-  },
-  {
-    "company_name": "Valeo",
-    "company_logo_url": "https://media.licdn.com/dms/image/v2/C4D0BAQF8x8kpXJLBkg/company-logo_100_100/company-logo_100_100/0/1630549492517/valeo_logo?e=2147483647&v=beta&t=N8RGg5q169hH6TUtyK7B0gpk8zjEGNXxcyayTL00rGQ",
-    "title": "Graduate Engineer Trainee - R&D PTM",
-    "type": "JOB",
-    "location": "Chennai, Tamil Nadu, India",
-    "experience_min": 0,
-    "experience_max": 1,
-    "experience_label": "Fresher (0-1 yrs)",
-    "stipend_or_salary": null,
-    "description": "BE Mechanical / Electrical\nKnowledge in CATIA / GD&T / Stackup / Knowledge in Alternator / Starter Motor is mandatory. Process knowledge (Casting / Stamping) is an added advantage.",
-    "apply_url": "https://www.linkedin.com/jobs/view/4205260262",
-    "source": "LinkedIn (Valeo)",
-    "age": "Recent",
-    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
-    "tags": [
-      "LinkedIn",
-      "Tier-1 Tech"
-    ],
-    "sem_key": "valeo@@engineer trainee r&d ptm",
-    "id": "lkd_8"
-  },
-  {
     "company_name": "QubeHealth-Pay",
     "company_logo_url": "https://media.licdn.com/dms/image/v2/C4E0BAQFh4bvDvGQaYw/company-logo_100_100/company-logo_100_100/0/1630642003309/qubehealth_logo?e=2147483647&v=beta&t=XCjbQTLe-qtibcKQQe_hIgaaDc0IPsZI3O9kqH8Ubqk",
     "title": "Software Engineer Intern",
@@ -354,29 +244,6 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     "id": "unstop_15"
   },
   {
-    "company_name": "Marvel Developers",
-    "company_logo_url": null,
-    "title": "Purchase Executive",
-    "type": "JOB",
-    "location": "Pune, Maharashtra",
-    "experience_min": 0,
-    "experience_max": 1,
-    "experience_label": "Fresher / 0–1 YOE",
-    "stipend_or_salary": "Competitive / Market standard",
-    "description": "### About the Opportunity (via Unstop)\n**Marvel Developers** is actively hiring for **Purchase Executive** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Pune, Maharashtra**.\n\n### Key Details\n- **Role:** Purchase Executive\n- **Company:** Marvel Developers\n- **Location:** Pune, Maharashtra\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop\n",
-    "apply_url": "https://unstop.com/jobs/purchase-executive-marvel-developers-1824721",
-    "source": "Unstop (Marvel Developers)",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
-    "tags": [
-      "Unstop",
-      "Campus Hiring",
-      "Fresher"
-    ],
-    "sem_key": "marveldevelopers@@purchase executive",
-    "id": "unstop_16"
-  },
-  {
     "company_name": "Kikbak Financial",
     "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-PWUb2ED9qE18776170973Qj3SqRQYF.png",
     "title": "Frontend Developer (React.js)",
@@ -493,41 +360,5 @@ export const curatedJobLeads: ScrapedJobLead[] = [
     ],
     "sem_key": "t9gic@@dot net full stack developer",
     "id": "unstop_21"
-  },
-  {
-    "id": "jobspy_22",
-    "company_name": "Infyjob Technology Services",
-    "company_logo_url": "https://img.naukimg.com/logo_images/groups/v1/5178598.gif",
-    "title": "Walk-in For Tour Operator - Fresher",
-    "type": "JOB",
-    "location": "Chennai(Saidapet), India",
-    "experience_min": 0,
-    "experience_max": 1,
-    "experience_label": "0-1 yrs",
-    "stipend_or_salary": null,
-    "description": "Experience in Tours and Travels  \nUnderstanding of tourism offerings and options  \nNeed to convert lead as customer and Co-ordination  \nStart to end supervision of tour  \nClient retention , Drafting itinerary  \nCall / whats app 9003053935 Kumar  \n  \n\n**Required Candidate profile**\n\nBasic knowledge of international and domestic destinations.  \nExcellent communication and convincing skills  \nWilling to learn with online booking portals  \nPassionate about travel and customer interaction.  \n  \n\n**Perks and benefits**\n\nFree Beverages  \nIncentives and Bonus",
-    "apply_url": "https://www.naukri.com/job-listings-walk-in-for-tour-operator-fresher-infyjob-technology-services-chennai-0-to-1-years-241126029257",
-    "source": "JobSpy (naukri)",
-    "age": "2026-11-24",
-    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
-    "tags": []
-  },
-  {
-    "id": "jobspy_23",
-    "company_name": "R1 RCM",
-    "company_logo_url": "https://img.naukimg.com/logo_images/groups/v1/2483944.gif",
-    "title": "Walk-in || Associate Analyst",
-    "type": "JOB",
-    "location": "Noida, Gurugram, India",
-    "experience_min": 0,
-    "experience_max": 1,
-    "experience_label": "Fresher (0-1 yrs)",
-    "stipend_or_salary": "₹2.8 - 3 LPA",
-    "description": "**Role & responsibilities**\n\n  \n\nAuth - Fresher and B.Pharma Graduate\n\n2023 to 2026 passout only\n\n  \n\nNight shift\n\nWFO\n\n  \n\nBoth side cab facility\n\nFree meal\n\nCarry your resume\n\nContact Person - Janashin",
-    "apply_url": "https://www.naukri.com/job-listings-associate-analyst-r1-rcm-noida-gurugram-0-to-0-years-241126029247",
-    "source": "JobSpy (naukri)",
-    "age": "2026-11-24",
-    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
-    "tags": []
   }
 ];
