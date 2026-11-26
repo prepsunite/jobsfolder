@@ -1,7 +1,7 @@
 export interface CuratedJobLead {
   id: string;
   company_name: string;
-  company_logo_url: string;
+  company_logo_url: string | null;
   title: string;
   type: string;
   location: string;
@@ -131,7 +131,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
   },
   {
     "company_name": "Eonverse",
-    "company_logo_url": null,
+    "company_logo_url": "https://www.google.com/s2/favicons?domain=eonverse.com&sz=128",
     "title": "Frontend Developer",
     "type": "JOB",
     "location": "Hyderabad, Telangana",
@@ -197,7 +197,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
   },
   {
     "company_name": "Revalsys Technologies Pvt. Ltd.",
-    "company_logo_url": null,
+    "company_logo_url": "https://www.google.com/s2/favicons?domain=revalsys.com&sz=128",
     "title": "Frontend Developer",
     "type": "JOB",
     "location": "Hyderabad, Telangana",
@@ -537,7 +537,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
   },
   {
     "company_name": "Vinayan(India) Consulting Services Pvt Ltd",
-    "company_logo_url": null,
+    "company_logo_url": "https://www.google.com/s2/favicons?domain=vinayan.com&sz=128",
     "title": "AI Developer",
     "type": "JOB",
     "location": "New Delhi, Delhi",
@@ -561,7 +561,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
   },
   {
     "company_name": "T9 GIC",
-    "company_logo_url": null,
+    "company_logo_url": "https://www.google.com/s2/favicons?domain=t9gic.com&sz=128",
     "title": "Salesforce Developer",
     "type": "JOB",
     "location": "Hyderabad, Telangana",
@@ -584,7 +584,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
   },
   {
     "company_name": "404Minds Technologies",
-    "company_logo_url": null,
+    "company_logo_url": "https://www.google.com/s2/favicons?domain=404minds.com&sz=128",
     "title": "Java Developer (Fresher)",
     "type": "JOB",
     "location": "India (Pan-India)",
@@ -631,7 +631,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
   },
   {
     "company_name": "Bootcoding Pvt. Ltd.",
-    "company_logo_url": null,
+    "company_logo_url": "https://www.google.com/s2/favicons?domain=bootcoding.in&sz=128",
     "title": "Agentic AI Developer",
     "type": "JOB",
     "location": "Nagapur, Maharashtra",
@@ -703,7 +703,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
   },
   {
     "company_name": "GVI Technology Pvt Ltd",
-    "company_logo_url": null,
+    "company_logo_url": "https://www.google.com/s2/favicons?domain=gvi.in&sz=128",
     "title": "Python Full-Stack Developer",
     "type": "JOB",
     "location": "Bhubaneswar, Odisha",
@@ -727,7 +727,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
   },
   {
     "company_name": "T9 GIC",
-    "company_logo_url": null,
+    "company_logo_url": "https://www.google.com/s2/favicons?domain=t9gic.com&sz=128",
     "title": ".NET Full Stack Developer",
     "type": "JOB",
     "location": "Hyderabad, Telangana",
@@ -750,7 +750,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
   },
   {
     "company_name": "Prishusoft",
-    "company_logo_url": null,
+    "company_logo_url": "https://www.google.com/s2/favicons?domain=prishusoft.com&sz=128",
     "title": "ASP.NET MVC/Core Developer",
     "type": "JOB",
     "location": "Ahmedabad, Gujarat",
@@ -774,7 +774,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
   },
   {
     "company_name": "T9 GIC",
-    "company_logo_url": null,
+    "company_logo_url": "https://www.google.com/s2/favicons?domain=t9gic.com&sz=128",
     "title": "Dot Net Full stack Developer",
     "type": "JOB",
     "location": "Hyderabad, Telangana",
