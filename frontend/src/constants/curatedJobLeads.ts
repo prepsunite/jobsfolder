@@ -4,7 +4,320 @@ export type CuratedJobLead = ScrapedJobLead;
 
 export const CURATED_JOB_LEADS: CuratedJobLead[] = [
   {
-    "id": "lead_1",
+    "id": "69627435-d53f-4f45-9f9a-dd6132d9637a",
+    "company_name": "Pariskq",
+    "company_logo_url": "https://www.google.com/s2/favicons?domain=pariskq.in&sz=128",
+    "title": "Software Engineer Internship",
+    "type": "INTERNSHIP",
+    "location": "Bangalore, Karnataka",
+    "experience_min": 0,
+    "experience_max": 1,
+    "experience_label": "0-1 Years",
+    "stipend_or_salary": "Competitive / Market standard",
+    "description": "### About the Opportunity (via Unstop)\n**Pariskq** is actively hiring for **Software Engineer Internship** (internship) on Unstop for early-career engineers and fresh graduates in **Bangalore, Karnataka**.\n\n### Key Details\n- **Role:** Software Engineer Internship\n- **Company:** Pariskq\n- **Location:** Bangalore, Karnataka\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
+    "apply_url": "https://unstop.com/internships/software-engineer-internship-pariskq-1729187",
+    "source": "Verified Direct ATS",
+    "age": "Active Now",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
+    "tags": [
+      "Cohort: 26 Nov 2026",
+      "Unstop",
+      "Campus Hiring"
+    ]
+  },
+  {
+    "id": "1f9b0437-821c-4fe9-8af2-36b317f8cef2",
+    "company_name": "Maytrixtech",
+    "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-1Rm9NBP8tg376677150lcugW2PPFb.png",
+    "title": "Software Engineer Internship",
+    "type": "INTERNSHIP",
+    "location": "India (Pan-India)",
+    "experience_min": 0,
+    "experience_max": 1,
+    "experience_label": "0-1 Years",
+    "stipend_or_salary": "Competitive / Market standard",
+    "description": "### About the Opportunity (via Unstop)\n**Maytrixtech** is actively hiring for **Software Engineer Internship** (internship) on Unstop for early-career engineers and fresh graduates in **India (Pan-India)**.\n\n### Key Details\n- **Role:** Software Engineer Internship\n- **Company:** Maytrixtech\n- **Location:** India (Pan-India)\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
+    "apply_url": "https://unstop.com/internships/software-engineer-internship-maytrixtech-1733361",
+    "source": "Verified Direct ATS",
+    "age": "Active Now",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
+    "tags": [
+      "Cohort: 26 Nov 2026",
+      "Unstop",
+      "Campus Hiring"
+    ]
+  },
+  {
+    "id": "b95aad2d-cca2-4c48-89e5-ade3cf194b54",
+    "company_name": "QuizAttempt",
+    "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-LubBS8QMHg1243902584LUNvGCGJHl.png",
+    "title": "Software Engineer Internship",
+    "type": "INTERNSHIP",
+    "location": "India (Pan-India)",
+    "experience_min": 0,
+    "experience_max": 1,
+    "experience_label": "0-1 Years",
+    "stipend_or_salary": "Competitive / Market standard",
+    "description": "### About the Opportunity (via Unstop)\n**QuizAttempt** is actively hiring for **Software Engineer Internship** (internship) on Unstop for early-career engineers and fresh graduates in **India (Pan-India)**.\n\n### Key Details\n- **Role:** Software Engineer Internship\n- **Company:** QuizAttempt\n- **Location:** India (Pan-India)\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
+    "apply_url": "https://unstop.com/internships/software-engineer-internship-quizattempt-1662205",
+    "source": "Verified Direct ATS",
+    "age": "Active Now",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
+    "tags": [
+      "Cohort: 26 Nov 2026",
+      "Unstop",
+      "Campus Hiring"
+    ]
+  },
+  {
+    "id": "2e105818-e83a-4d62-a8c0-2ee8e1583530",
+    "company_name": "BluMotiv",
+    "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-hNAwus1cjn24889162yAbwJqWwhN.png",
+    "title": "Software Engineer Internship",
+    "type": "INTERNSHIP",
+    "location": "India (Pan-India)",
+    "experience_min": 0,
+    "experience_max": 1,
+    "experience_label": "0-1 Years",
+    "stipend_or_salary": "Competitive / Market standard",
+    "description": "### About the Opportunity (via Unstop)\n**BluMotiv** is actively hiring for **Software Engineer Internship** (internship) on Unstop for early-career engineers and fresh graduates in **India (Pan-India)**.\n\n### Key Details\n- **Role:** Software Engineer Internship\n- **Company:** BluMotiv\n- **Location:** India (Pan-India)\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
+    "apply_url": "https://unstop.com/internships/software-engineer-internship-blumotiv-1668628",
+    "source": "Verified Direct ATS",
+    "age": "Active Now",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
+    "tags": [
+      "Cohort: 26 Nov 2026",
+      "Unstop",
+      "Campus Hiring"
+    ]
+  },
+  {
+    "id": "da5deb0a-146b-436b-beba-bec348f6405d",
+    "company_name": "JobLuxe",
+    "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-MsYwuFQhTM1962750849wZCuvPRzcA.png",
+    "title": "Software Engineer Internship",
+    "type": "INTERNSHIP",
+    "location": "India (Pan-India)",
+    "experience_min": 0,
+    "experience_max": 1,
+    "experience_label": "0-1 Years",
+    "stipend_or_salary": "Competitive / Market standard",
+    "description": "### About the Opportunity (via Unstop)\n**JobLuxe** is actively hiring for **Software Engineer Internship** (internship) on Unstop for early-career engineers and fresh graduates in **India (Pan-India)**.\n\n### Key Details\n- **Role:** Software Engineer Internship\n- **Company:** JobLuxe\n- **Location:** India (Pan-India)\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
+    "apply_url": "https://unstop.com/internships/software-engineer-intern-jobluxe-1750680",
+    "source": "Verified Direct ATS",
+    "age": "Active Now",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
+    "tags": [
+      "Cohort: 26 Nov 2026",
+      "Unstop",
+      "Campus Hiring"
+    ]
+  },
+  {
+    "id": "23da8c55-db3f-44ca-9ad4-bd6ed1b8f845",
+    "company_name": "Better Analytics Pvt Ltd",
+    "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-5A1A7ba2Ke1339431386RWPsQ0Hi82.png",
+    "title": "Software Engineer Internship",
+    "type": "INTERNSHIP",
+    "location": "Hyderabad, Telangana",
+    "experience_min": 0,
+    "experience_max": 1,
+    "experience_label": "0-1 Years",
+    "stipend_or_salary": "Competitive / Market standard",
+    "description": "### About the Opportunity (via Unstop)\n**Better Analytics Pvt Ltd** is actively hiring for **Software Engineer Internship** (internship) on Unstop for early-career engineers and fresh graduates in **Hyderabad, Telangana**.\n\n### Key Details\n- **Role:** Software Engineer Internship\n- **Company:** Better Analytics Pvt Ltd\n- **Location:** Hyderabad, Telangana\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
+    "apply_url": "https://unstop.com/internships/software-engineer-internship-better-analytics-pvt-ltd-1681892",
+    "source": "Verified Direct ATS",
+    "age": "Active Now",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
+    "tags": [
+      "Cohort: 26 Nov 2026",
+      "Unstop",
+      "Campus Hiring"
+    ]
+  },
+  {
+    "id": "5cf32b60-8c6e-4c60-a699-f0e7a3aa01ca",
+    "company_name": "7 Codearena Private Limited",
+    "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-F9B1vj3Yr843895214VZBbQDG3ol.png",
+    "title": "Software Engineering Frontend Internship",
+    "type": "INTERNSHIP",
+    "location": "Patna, Bihar",
+    "experience_min": 0,
+    "experience_max": 1,
+    "experience_label": "0-1 Years",
+    "stipend_or_salary": "Competitive / Market standard",
+    "description": "### About the Opportunity (via Unstop)\n**7 Codearena Private Limited** is actively hiring for **Software Engineering Frontend Internship** (internship) on Unstop for early-career engineers and fresh graduates in **Patna, Bihar**.\n\n### Key Details\n- **Role:** Software Engineering Frontend Internship\n- **Company:** 7 Codearena Private Limited\n- **Location:** Patna, Bihar\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
+    "apply_url": "https://unstop.com/internships/software-engineering-frontend-internship-7-codearena-private-limited-1770918",
+    "source": "Verified Direct ATS",
+    "age": "Active Now",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
+    "tags": [
+      "Cohort: 26 Nov 2026",
+      "Unstop",
+      "Campus Hiring"
+    ]
+  },
+  {
+    "id": "89942ffa-ae80-452b-b18a-bf80108b10ac",
+    "company_name": "TalentCV",
+    "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-Txmdtyf79M117712596OfP1JKMlFw.png",
+    "title": "Software Engineer Internship",
+    "type": "INTERNSHIP",
+    "location": "India (Pan-India)",
+    "experience_min": 0,
+    "experience_max": 1,
+    "experience_label": "0-1 Years",
+    "stipend_or_salary": "Competitive / Market standard",
+    "description": "### About the Opportunity (via Unstop)\n**TalentCV** is actively hiring for **Software Engineer Internship** (internship) on Unstop for early-career engineers and fresh graduates in **India (Pan-India)**.\n\n### Key Details\n- **Role:** Software Engineer Internship\n- **Company:** TalentCV\n- **Location:** India (Pan-India)\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
+    "apply_url": "https://unstop.com/internships/software-engineer-intern-talentcv-1694821",
+    "source": "Verified Direct ATS",
+    "age": "Active Now",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
+    "tags": [
+      "Cohort: 26 Nov 2026",
+      "Unstop",
+      "Campus Hiring"
+    ]
+  },
+  {
+    "id": "b50a62fe-8501-4259-ae8a-bab3eed649fd",
+    "company_name": "GradGuide",
+    "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-tgNazmlsVB6025692436L2q7w2VX3.png",
+    "title": "Software Engineering Internship",
+    "type": "INTERNSHIP",
+    "location": "Mumbai, Maharashtra / Mumbai Suburban, Maharashtra / Sion Mumbai, Maharashtra",
+    "experience_min": 0,
+    "experience_max": 1,
+    "experience_label": "0-1 Years",
+    "stipend_or_salary": "Competitive / Market standard",
+    "description": "### About the Opportunity (via Unstop)\n**GradGuide** is actively hiring for **Software Engineering Internship** (internship) on Unstop for early-career engineers and fresh graduates in **Mumbai, Maharashtra / Mumbai Suburban, Maharashtra / Sion Mumbai, Maharashtra**.\n\n### Key Details\n- **Role:** Software Engineering Internship\n- **Company:** GradGuide\n- **Location:** Mumbai, Maharashtra / Mumbai Suburban, Maharashtra / Sion Mumbai, Maharashtra\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
+    "apply_url": "https://unstop.com/internships/software-engineering-internship-gradguide-1757996",
+    "source": "Verified Direct ATS",
+    "age": "Active Now",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
+    "tags": [
+      "Cohort: 26 Nov 2026",
+      "Unstop",
+      "Campus Hiring"
+    ]
+  },
+  {
+    "id": "d5b1b4d1-9a6e-410f-8779-85cda366359b",
+    "company_name": "7 Codearena Private Limited",
+    "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-F9B1vj3Yr843895214VZBbQDG3ol.png",
+    "title": "Software Engineer Internship",
+    "type": "INTERNSHIP",
+    "location": "Patna, Bihar",
+    "experience_min": 0,
+    "experience_max": 1,
+    "experience_label": "0-1 Years",
+    "stipend_or_salary": "Competitive / Market standard",
+    "description": "### About the Opportunity (via Unstop)\n**7 Codearena Private Limited** is actively hiring for **Software Engineer Internship** (internship) on Unstop for early-career engineers and fresh graduates in **Patna, Bihar**.\n\n### Key Details\n- **Role:** Software Engineer Internship\n- **Company:** 7 Codearena Private Limited\n- **Location:** Patna, Bihar\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
+    "apply_url": "https://unstop.com/internships/software-engineer-internship-7-codearena-private-limited-1764532",
+    "source": "Verified Direct ATS",
+    "age": "Active Now",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
+    "tags": [
+      "Cohort: 26 Nov 2026",
+      "Unstop",
+      "Campus Hiring"
+    ]
+  },
+  {
+    "id": "9f1dd62c-6948-4282-a906-6a687f15c856",
+    "company_name": "Confluent Solutions",
+    "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-fE3ZKCrOmL779652662dAQNa1A1Yb.png",
+    "title": "Software Development Engineer Internship",
+    "type": "INTERNSHIP",
+    "location": "Bangalore, Karnataka",
+    "experience_min": 0,
+    "experience_max": 1,
+    "experience_label": "0-1 Years",
+    "stipend_or_salary": "Competitive / Market standard",
+    "description": "### About the Opportunity (via Unstop)\n**Confluent Solutions** is actively hiring for **Software Development Engineer Internship** (internship) on Unstop for early-career engineers and fresh graduates in **Bangalore, Karnataka**.\n\n### Key Details\n- **Role:** Software Development Engineer Internship\n- **Company:** Confluent Solutions\n- **Location:** Bangalore, Karnataka\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
+    "apply_url": "https://unstop.com/internships/software-development-engineer-internship-confluent-solutions-1818813",
+    "source": "Verified Direct ATS",
+    "age": "Active Now",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
+    "tags": [
+      "Cohort: 26 Nov 2026",
+      "Unstop",
+      "Campus Hiring"
+    ]
+  },
+  {
+    "id": "3d97497f-a53c-48d9-aafa-a60a4349edff",
+    "company_name": "Plasma Tech",
+    "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-uDQm2k5D0e2011247134mShzfqlg6L.png",
+    "title": "Software Engineer Internship",
+    "type": "INTERNSHIP",
+    "location": "India (Pan-India)",
+    "experience_min": 0,
+    "experience_max": 1,
+    "experience_label": "0-1 Years",
+    "stipend_or_salary": "Competitive / Market standard",
+    "description": "### About the Opportunity (via Unstop)\n**Plasma Tech** is actively hiring for **Software Engineer Internship** (internship) on Unstop for early-career engineers and fresh graduates in **India (Pan-India)**.\n\n### Key Details\n- **Role:** Software Engineer Internship\n- **Company:** Plasma Tech\n- **Location:** India (Pan-India)\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
+    "apply_url": "https://unstop.com/internships/software-engineer-internship-plasma-tech-1774617",
+    "source": "Verified Direct ATS",
+    "age": "Active Now",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
+    "tags": [
+      "Cohort: 26 Nov 2026",
+      "Unstop",
+      "Campus Hiring"
+    ]
+  },
+  {
+    "id": "dd7fd33a-56ae-42cd-aa25-986b84e9b948",
+    "company_name": "GE Vernova",
+    "company_logo_url": "https://www.google.com/s2/favicons?domain=gevernova.com&sz=128",
+    "title": "Digital Technology Intern",
+    "type": "INTERNSHIP",
+    "location": "Hyderabad",
+    "experience_min": 0,
+    "experience_max": 0,
+    "experience_label": "0-0 Years",
+    "stipend_or_salary": "₹45,000 - ₹1,00,000 / month (Estimated)",
+    "description": "Job Description Summary We are seeking a motivated Power Systems intern to contribute to cutting-edge projects across \nTransmission and Distribution applications, including load flow, state estimation, and contingency \nanalysis; Energy Market applications, such as unit commitment; and Wide-Area Monitoring \nSystems, including oscillation source detection and inertial response. This hands-on role offers \npractical experience supporting a range of customer projects.\nResponsibilities: \n• Assist in developing the Power System Models for various customers \n• Should have good programming knowledge in C++/Java to understand the existing product \ncode and provide enhancements \n• Implement and test algorithms in the product stack \n• Support renewable energy integration and grid interconnection studies \n• Automate work flows for power system analytics \nQualifications/Requirements \nBasic Qualifications: \n• Currently enrolled in a Master’s program at an accredited university on Power Systems & \nElectrical Engineering \n• CGPA 7& above\nEligibility Requirements: \n• Students should be physically available to attend this internship at the GE office and able to \ndedicate their full attention to the program without any concurrent coursework or project \nassignments. \n• Must be willing to work out of an office located in Hyderabad or Bengaluru. \nLocation will be assigned according to business needs before actual internship start date. \n• Legal authorization to work in India is required. \n\n Job Description Desired Characteristics: • Prior intern, co-op, or research experience in software or relevant area. • Leadership experience inside and/or outside the classroom. • A strong commitment to a career in technology and passion/aptitude for software engineering. • Strong analytical and technical skills with experience in software industry standards and development tools. • Excellent written and verbal communication skills and ability to articulate clearly. • Demonstrated creative problem solving and proactive learning. Location: Hyderabad Please note that our internships are not full-time employment positions. However, we aim to provide potential candidates with the opportunity to transition to full-time employment roles based on business needs and individual performance. We believe that internships are a great way for students to gain experience and develop their skills. That's why we encourage you to apply for our internship program. We are confident that our program will provide you with a great learning experience and the opportunity to make a meaningful impact.\n\n Additional Information Relocation Assistance Provided: Yes",
+    "apply_url": "https://gevernova.wd5.myworkdayjobs.com/en-US/Vernova_ExternalSite/job/Hyderabad/Digital-Technology-Intern_R5055951-1",
+    "source": "Verified Direct ATS",
+    "age": "Active Now",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
+    "tags": [
+      "Cohort: 26 Nov 2026",
+      "Java",
+      "Algorithms",
+      "Workday Enterprise ATS"
+    ]
+  },
+  {
+    "id": "ee074045-7b4b-4edd-a243-61d18eb03d10",
+    "company_name": "Marvell",
+    "company_logo_url": "https://www.google.com/s2/favicons?domain=marvell.com&sz=128",
+    "title": "Research Intern, Physical AI and Robotics Systems (PhD)",
+    "type": "INTERNSHIP",
+    "location": "Hyderabad",
+    "experience_min": 0,
+    "experience_max": 0,
+    "experience_label": "0-0 Years",
+    "stipend_or_salary": "₹45,000 - ₹1,00,000 / month (Estimated)",
+    "description": "About Marvell \n\n Marvell’s semiconductor solutions are the essential building blocks of the data infrastructure that connects our world. Across enterprise, cloud and AI, and carrier architectures, our innovative technology is enabling new possibilities. \n\n At Marvell, you can affect the arc of individual lives, lift the trajectory of entire industries, and fuel the transformative potential of tomorrow. For those looking to make their mark on purposeful and enduring innovation, above and beyond fleeting trends, Marvell is a place to thrive, learn, and lead. \n\n Your Team, Your Impact \n\nMarvell is a global leader in high-performance silicon and AI infrastructure, powering the world's most advanced datacenters, cloud platforms, 5G networks, and AI/ML workloads. Our innovations drive next-generation computing, networking, and storage — enabling breakthrough performance, scalability, and efficiency for the most demanding applications.\n\nWhy This Internship\n\n* Engage with open research problems at the frontier of AI systems — challenges that require access to real silicon, large-scale infrastructure, and production data\n* Contribute to work intended for publication, with support for presenting results both internally and externally\n* Translate research outcomes into real products and next-generation silicon, extending impact beyond publication\n* Collaborate with and receive mentorship from senior architects and researchers who will help advance your ideas\n* Gain access to advanced infrastructure, tools, and pre-release hardware rarely available in academic settings\n* Pursue original, exploratory research directions — independent thinking is actively encouraged \n\n What You Can Expect \n\n Focus: Build and evaluate the full stack that lets learned models perceive, decide, and act reliably on real hardware. \n\n What you’ll do \n\n Design and verify end-to-end robotic systems: sensing, perception, planning, and control \n Build real-time pipelines between sensors, inference engines, and actuators, and profile them for latency and power \n Integrate learned components (VLA models, learned controllers, world models) with classical modules \n Bridge simulation and hardware with sim-to-real, logging, and replay infrastructure \n\n What We're Looking For \n\n Eligibility: Pursuing a PhD in CS, EE, CE, Robotics, or a related field.\nYour research matters to us too. We’ll align the project with your work wherever possible, so the internship complements your thesis rather than pausing it.\nEdge inference (TensorRT, ONNX, Jetson), sensor fusion, or CoRL/ICRA/RSS/OSDI/NSDI publications are a plus, but strong fundamentals and a love for building real systems matter most.\n\n What you bring \n\n Strong systems fundamentals (real-time/embedded, distributed systems, OS, or HPC) \n Hands-on ML experience (PyTorch/JAX) and models deployed beyond notebooks \n C++ and/or Python; ROS 2 plus a simulator or real robot (Isaac Sim, MuJoCo, Gazebo) \n &#xa;&#xa; Additional Compensation and Benefit Elements \n\n With competitive compensation and great benefits, you will enjoy our workstyle within an environment of shared collaboration, transparency, and inclusivity. We’re dedicated to giving our people the tools and resources they need to succeed in doing work that matters, and to grow and develop with us. For additional information on what it’s like to work at Marvell, visit our Careers page.\n\n All qualified applicants will receive consideration for employment without regard to race, color, religion, sex, national origin, sexual orientation, gender identity, disability or protected veteran status. \n\n Interview Integrity \n\n To support fair and authentic hiring practices, candidates are not permitted to use AI tools (such as transcription apps, real-time answer generators like ChatGPT or Copilot, or automated note-taking bots) during interviews.\n\n These tools must not be used to record, assist with, or enhance responses in any way. Our interviews are designed to evaluate your individual experience, thought process, and communication skills in real time. Use of AI tools without prior instruction from the interviewer will result in disqualification from the hiring process.\n\n This position may require access to technology and/or software subject to U.S. export control laws and regulations, including the Export Administration Regulations (EAR). As such, applicants must be eligible to access export-controlled information as defined under applicable law. Marvell may be required to obtain export licensing approval from the U.S. Department of Commerce and/or the U.S. Department of State. Except for U.S. citizens, lawful permanent residents, or protected individuals as defined by 8 U.S.C. 1324b(a)(3), all applicants may be subject to an export license review process prior to employment. \n\n#LI-TT1",
+    "apply_url": "https://marvell.wd1.myworkdayjobs.com/en-US/MarvellCareers/job/Hyderabad/Research-Intern--Physical-AI-and-GPU--PhD-_2604253",
+    "source": "Verified Direct ATS",
+    "age": "Active Now",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
+    "tags": [
+      "Cohort: 26 Nov 2026",
+      "Python",
+      "AI",
+      "PyTorch",
+      "Robotics",
+      "AI Engineering",
+      "Workday Enterprise ATS"
+    ]
+  },
+  {
+    "id": "3c6e82ab-5eda-4b4e-a485-80b1396653eb",
     "company_name": "Cairnloop Technologies",
     "company_logo_url": null,
     "title": "Software Engineer Internship",
@@ -16,9 +329,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Cairnloop Technologies** is actively hiring for **Software Engineer Internship** (internship) on Unstop for early-career engineers and fresh graduates in **Gwalior, Madhya Pradesh**.\n\n### Key Details\n- **Role:** Software Engineer Internship\n- **Company:** Cairnloop Technologies\n- **Location:** Gwalior, Madhya Pradesh\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/internships/software-engineer-internship-cairnloop-technologies-1803128",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -26,7 +339,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_2",
+    "id": "096721e6-a3d3-4d71-8d54-df7b27b7f673",
     "company_name": "Digital Back Office",
     "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-DekZxPxCWo1023488419TpEAW72b2t.png",
     "title": "Software Engineer Internship",
@@ -38,9 +351,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Digital Back Office** is actively hiring for **Software Engineer Internship** (internship) on Unstop for early-career engineers and fresh graduates in **India (Pan-India)**.\n\n### Key Details\n- **Role:** Software Engineer Internship\n- **Company:** Digital Back Office\n- **Location:** India (Pan-India)\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/internships/software-engineer-internship-digital-back-office-1770133",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -48,7 +361,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_3",
+    "id": "0b60cf30-8809-448e-9373-325d63a50ebc",
     "company_name": "Softius Internet Services",
     "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-SBK52tqoiW13929633201jURhVslOE.png",
     "title": "Software Engineer Internship",
@@ -60,9 +373,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Softius Internet Services** is actively hiring for **Software Engineer Internship** (internship) on Unstop for early-career engineers and fresh graduates in **India (Pan-India)**.\n\n### Key Details\n- **Role:** Software Engineer Internship\n- **Company:** Softius Internet Services\n- **Location:** India (Pan-India)\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/internships/software-engineer-internship-softius-internet-services-1793059",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -70,7 +383,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_4",
+    "id": "2626449f-8caa-4efb-8ef5-0eed0e1b59ac",
     "company_name": "Blacklitt Technologies Pvt Ltd",
     "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-HIX0wqY8iU87699244PR5byYPSiI.png",
     "title": "Software Engineer Internship",
@@ -82,9 +395,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Blacklitt Technologies Pvt Ltd** is actively hiring for **Software Engineer Internship** (internship) on Unstop for early-career engineers and fresh graduates in **Bangalore, Karnataka**.\n\n### Key Details\n- **Role:** Software Engineer Internship\n- **Company:** Blacklitt Technologies Pvt Ltd\n- **Location:** Bangalore, Karnataka\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/internships/software-engineer-internship-blacklitt-technologies-pvt-ltd-1764201",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -92,7 +405,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_5",
+    "id": "016a3ce9-1266-43ed-ad5b-1a9541b30317",
     "company_name": "Coy",
     "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-ZKlE6KArgq1066260835XSREncmQC4.png",
     "title": "Software Engineer Intern",
@@ -104,9 +417,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Coy** is actively hiring for **Software Engineer Intern** (internship) on Unstop for early-career engineers and fresh graduates in **Gurgaon, Haryana**.\n\n### Key Details\n- **Role:** Software Engineer Intern\n- **Company:** Coy\n- **Location:** Gurgaon, Haryana\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/internships/software-engineer-intern-coy-1809143",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -114,11 +427,11 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_6",
+    "id": "63acd269-f21b-49c6-98a7-9c3a732ee9a2",
     "company_name": "Techwondoe",
     "company_logo_url": "https://www.google.com/s2/favicons?domain=techwondoe.com&sz=128",
     "title": "AI Backend Internship",
-    "type": "INTERNSHIP",
+    "type": "JOB",
     "location": "India (Pan-India)",
     "experience_min": 0,
     "experience_max": 1,
@@ -126,9 +439,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Techwondoe** is actively hiring for **AI Backend Internship** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **India (Pan-India)**.\n\n### Key Details\n- **Role:** AI Backend Internship\n- **Company:** Techwondoe\n- **Location:** India (Pan-India)\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/ai-backend-internship-techwondoe-1736373",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -138,7 +451,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_7",
+    "id": "76945d82-50d7-4298-854e-72b42f3b26b9",
     "company_name": "Aptapace Innovative Technologies Pvt.Ltd",
     "company_logo_url": null,
     "title": "Backend Developer",
@@ -150,9 +463,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Aptapace Innovative Technologies Pvt.Ltd** is actively hiring for **Backend Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Hyderabad, Telangana**.\n\n### Key Details\n- **Role:** Backend Developer\n- **Company:** Aptapace Innovative Technologies Pvt.Ltd\n- **Location:** Hyderabad, Telangana\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/backend-developer-aptapace-innovative-technologies-pvtltd-1711660",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -160,7 +473,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_8",
+    "id": "69121956-87de-4e7b-a894-ed356cfc7647",
     "company_name": "Bookyaar",
     "company_logo_url": "https://www.google.com/s2/favicons?domain=bookyaar.com&sz=128",
     "title": "Backend Developer",
@@ -172,9 +485,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Bookyaar** is actively hiring for **Backend Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **North West Delhi, Delhi**.\n\n### Key Details\n- **Role:** Backend Developer\n- **Company:** Bookyaar\n- **Location:** North West Delhi, Delhi\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/backend-developer-bookyaar-1720317",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -182,7 +495,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_9",
+    "id": "268a89b8-eacd-405c-8339-0c98b00983cb",
     "company_name": "GammaMoney Private Limited",
     "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-POkS3mu5vI15195673346oGDNBiRj2.png",
     "title": "Backend & DevOps Engineer",
@@ -194,9 +507,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**GammaMoney Private Limited** is actively hiring for **Backend & DevOps Engineer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Gurgaon, Haryana**.\n\n### Key Details\n- **Role:** Backend & DevOps Engineer\n- **Company:** GammaMoney Private Limited\n- **Location:** Gurgaon, Haryana\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/backend-devops-engineer-gammamoney-private-limited-1751223",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -205,7 +518,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_10",
+    "id": "47893a8b-73e6-4ff4-a424-ae95c785442a",
     "company_name": "Coverfox Insurance Broking Pvt. Ltd.",
     "company_logo_url": null,
     "title": "Backend Developer",
@@ -217,9 +530,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Coverfox Insurance Broking Pvt. Ltd.** is actively hiring for **Backend Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Bangalore, Karnataka**.\n\n### Key Details\n- **Role:** Backend Developer\n- **Company:** Coverfox Insurance Broking Pvt. Ltd.\n- **Location:** Bangalore, Karnataka\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/backend-developer-coverfox-insurance-broking-pvt-ltd-1735251",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -227,7 +540,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_11",
+    "id": "c83af31c-ca20-433a-8c91-e2d941942616",
     "company_name": "Persist Ventures",
     "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/partners75/687f7c0f89347_pv.jpeg",
     "title": "Backend Engineer",
@@ -239,9 +552,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Persist Ventures** is actively hiring for **Backend Engineer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **India (Pan-India)**.\n\n### Key Details\n- **Role:** Backend Engineer\n- **Company:** Persist Ventures\n- **Location:** India (Pan-India)\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/backend-engineer-persist-ventures-1727509",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -249,7 +562,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_12",
+    "id": "c75845fe-b656-4eeb-a2d5-b3ed7b9851d9",
     "company_name": "Crazy for Success Foundation",
     "company_logo_url": "https://media.licdn.com/dms/image/v2/D4D0BAQGGgZcQofM56A/company-logo_100_100/B4DZ5tdrk6KIAI-/0/1779952958035/crazy_for_success_logo?e=2147483647&v=beta&t=qprwTU42TFKorh82niQxEO3GeQcI2eo3x_SroyQW0z4",
     "title": "Software Development Internship in Pune",
@@ -257,13 +570,13 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "location": "Pune Division, Maharashtra, India",
     "experience_min": 0,
     "experience_max": 0,
-    "experience_label": "0-1 Years",
+    "experience_label": "0-0 Years",
     "stipend_or_salary": "Competitive / Market standard",
     "description": "Are you a tech-savvy individual with a passion for software development? Look no further! Join Crazy For Success Foundation as a Software Development intern and gain hands-on experience working with cutting-edge technologies like Java, HTML, CSS, JavaScript, Python, MySQL, React, .NET, Node.js, and C++ Programming.\nKey Responsibilities\nCollaborate with our development team to design and implement software solutions\nWrite clean, efficient, and well-documented code\nTest and debug software applications to ensure optimal performance\nAssist in the maintenance and enhancement of existing software systems\nStay up-to-date with the latest technology trends and best practices\nParticipate in team meetings and brainstorming sessions to contribute innovative ideas\nSupport the team in various software development tasks and projects\nDon't miss this exciting opportunity to kickstart your career in software development with Crazy For Success Foundation! Apply now and be part of a dynamic team dedicated to making a positive impact in the world.\nAbout Company: We Are Crazy is a non-profit educational organization that teaches personal development and leadership skills through a worldwide network of clubs. We help people from diverse backgrounds become more confident speakers, communicators, and leaders. Our foundation is promoting education and helping out our nation to beat the economic crisis caused by the COVID-19 pandemic.",
     "apply_url": "https://www.linkedin.com/jobs/view/4490148951",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Python",
@@ -275,7 +588,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_13",
+    "id": "20cd441e-4569-4b91-a674-6b9ba553bc91",
     "company_name": "AEKZ Securiglobe India",
     "company_logo_url": null,
     "title": "Full Stack Developer – Product Development",
@@ -287,9 +600,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "₹20,000 - 30,000 / month",
     "description": "Full Stack Developer – Product Development\n\n**Company:** AEKZ Securiglobe India Private Limited  \n**Location:** Chennai, Tamil Nadu  \n**Employment Type:** Full-Time | Permanent  \n**Experience:** 0–3 Years\n\nAbout Securiglobe\n\nAEKZ Securiglobe India Private Limited is a cybersecurity and technology company focused on developing innovative cybersecurity solutions, enterprise applications and scalable software products.\n\nWe are expanding our Product Development team and looking for a passionate Full Stack Developer who is interested in building real-world technology products from the ground up.\n\nThe selected candidate will work on our in-house products, including cybersecurity platforms, web applications, backend systems and API integrations.\n\nRole Overview\n\nAs a Full Stack Developer, you will be involved in the complete software product development lifecycle, including planning, designing, coding, testing, debugging and deployment.\n\nYou will work closely with the technical leadership team to develop new product features, improve existing functionalities and build scalable applications.\n\nKey Responsibilities\n\n**Backend Development**\n\n* Develop backend applications using Python and Flask.\n* Design, develop and maintain RESTful APIs.\n* Implement authentication, authorization and user management.\n* Develop database structures and optimise database operations.\n* Integrate third-party APIs and external services.\n\n**Frontend Development**\n\n* Develop responsive and interactive web interfaces.\n* Work with HTML, CSS and JavaScript.\n* Build application dashboards and user management interfaces.\n* Work with React.js or other modern frontend frameworks.\n* Ensure application performance and cross-browser compatibility.\n\n**Product Engineering**\n\n* Participate in the development of in-house software products.\n* Convert technical and business requirements into functional features.\n* Develop new modules and improve existing product functionalities.\n* Troubleshoot, debug and resolve application issues.\n* Participate in product testing, beta releases and production deployments.\n\n**Database & Deployment**\n\n* Work with SQL databases such as SQLite, PostgreSQL or MySQL.\n* Manage Git repositories and version control.\n* Work with Linux-based environments and server deployments.\n* Understand cloud infrastructure and API integrations.\n\n**Security & Quality**\n\n* Follow secure coding practices.\n* Understand common web application vulnerabilities.\n* Implement appropriate input validation and error handling.\n* Follow software development best practices.\n* Maintain clean, reusable and documented code.\n\nRequired Technical Skills\n\n* Programming knowledge in Python.\n* Familiarity with Flask or Django.\n* Good understanding of HTML, CSS and JavaScript.\n* Knowledge of REST API development and integration.\n* Basic knowledge of SQL and database management.\n* Familiarity with Git and GitHub.\n* Understanding of frontend and backend application architecture.\n* Good logical thinking and problem-solving skills.\n\nGood to Have\n\n* Knowledge of React.js.\n* Experience with SaaS or web application development.\n* Familiarity with Cloudflare, VPS or cloud hosting.\n* Knowledge of Linux and server administration.\n* Understanding of cybersecurity concepts and OWASP Top 10.\n* Experience developing browser extensions.\n* Exposure to AI/ML integrations or automation.\n\nEligibility\n\n* B.E., B.Tech, B.Sc, BCA, MCA or equivalent qualification in Computer Science, IT or related fields.\n* Freshers with strong programming fundamentals and practical project experience are welcome.\n* Candidates with 1–3 years of relevant development experience are preferred.\n* Candidates should be able to demonstrate their programming knowledge through projects, GitHub repositories or technical assessments.\n\nWhat We Offer\n\n* Opportunity to work on real-world commercial software products.\n* Hands-on experience in cybersecurity product engineering.\n* Direct collaboration with technical leadership.\n* Exposure to modern development technologies and cloud infrastructure.\n* Opportunity to take ownership of product features and engineering tasks.\n* Professional growth within an emerging technology company.\n\nApplication Process\n\nInterested candidates are requested to share their updated resume along with their GitHub profile, portfolio or links to previously developed projects.\n\n**Company:** AEKZ Securiglobe India Private Limited  \n**Location:** Chennai, Tamil Nadu, India\n\nPay: ₹20,000.00 - ₹30,000.00 per month\n\nWork Location: In person",
     "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010336303170",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Python",
@@ -301,7 +614,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_14",
+    "id": "e293c550-9ce8-4abf-9a9c-7ec8cec58a84",
     "company_name": "CGI",
     "company_logo_url": "https://img.naukimg.com/logo_images/groups/v1/1402790.gif",
     "title": "Graduate Trainee - AI & ML Technologies",
@@ -310,12 +623,12 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "experience_min": 0,
     "experience_max": 1,
     "experience_label": "0-1 Years",
-    "stipend_or_salary": "Competitive Fresher CTC",
+    "stipend_or_salary": "Competitive Market Standard",
     "description": "**Position Description:**   \n\nLocation: Bangalore, IndiaExperience - 0 Years / FreshersAbout the RoleWe are looking for enthusiastic and passionate fresh graduates who are eager to build a career in Artificial Intelligence (AI), Machine Learning (ML), Generative AI, Data Analytics, and emerging technologies. This role offers an excellent opportunity to work on innovative projects, gain hands-on experience with cutting-edge AI tools, and collaborate with cross-functional teams to deliver business solutions.\n\n**Your future duties and responsibilities:**   \n\nKey Responsibilities- Support the development, testing, and implementation of AI-driven solutions and automation initiatives.- Work closely with business and technical teams to understand requirements and translate them into technology solutions.- Assist in developing and deploying Machine Learning and Generative AI use cases.- Leverage AI platforms and tools to improve operational efficiency and business outcomes.- Analyze data, generate insights, and contribute to data-driven decision-making.- Stay updated on emerging technologies, industry trends, and best practices in AI and Data Science.- Participate in innovation programs, hackathons, proof-of-concepts, and experimentation initiatives.- Prepare presentations, reports, and project updates for stakeholders.Eligibility Criteria:- Basic understanding of Artificial Intelligence, Machine Learning, Generative AI, Data Analytics, and Python programming.- Familiarity with AI platforms and tools such as ChatGPT, Microsoft Copilot, Azure OpenAI, or similar technologies.- Strong analytical thinking and problem-solving capabilities.- Excellent verbal and written communication skills.- Good presentation, interpersonal, and stakeholder management skills.- Ability to work effectively in a collaborative, team-oriented environment.- Quick learner with a strong passion for innovation, technology, and continuous learning.- Exposure to Azure, AWS, Google Cloud, or similar cloud platforms.- Knowledge of data visualization and analytics tools is an added advantage.What You'll Gain- Hands-on experience working on real-world AI and Generative AI projects.- Exposure to cutting-edge technologies and enterprise-grade AI platforms.- Mentorship from experienced professionals and technical leaders.- Opportunities to participate in innovation initiatives and professional development programs.- A collaborative and inclusive work environment that promotes continuous learning and growth.Join us to shape the future through innovation and AI-powered transformation.\n\n**Required qualifications to be successful in this role:**   \n\nPreferred Qualifications- Bachelor's Degree in Computer Science, Information Technology, Artificial Intelligence, Data Science, or a related discipline.- BE/Btech - CS AI/ML- Academic projects, internships, certifications, or hackathon experience related to AI, Machine Learning, Data Science, Cloud Computing, or Emerging Technologies.\n\n**Skills:**   \n\n* Artificial Intelligence\n* Data Science\n* Generative AI\n* Machine Learning\n* Python\n\n~51635,0,51773,0,53196,0,52039,0,23530,0~-->",
     "apply_url": "https://www.naukri.com/job-listings-graduate-trainee-ai-ml-technologies-cgi-information-systems-and-management-consultants-bengaluru-0-to-1-years-261126912555",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Python",
@@ -327,7 +640,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_15",
+    "id": "7073e4b4-bd3b-4737-b9c3-ed711fbf6803",
     "company_name": "Tracxn Technologies limited",
     "company_logo_url": "https://www.google.com/s2/favicons?domain=tracxn.com&sz=128",
     "title": "Backend Developer",
@@ -339,9 +652,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Tracxn Technologies limited** is actively hiring for **Backend Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Bangalore, Karnataka**.\n\n### Key Details\n- **Role:** Backend Developer\n- **Company:** Tracxn Technologies limited\n- **Location:** Bangalore, Karnataka\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/backend-developer-tracxn-technologies-limited-1743906",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -349,7 +662,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_16",
+    "id": "45f2880e-c3fa-4a4b-a6a5-c0dd8a8e3e07",
     "company_name": "Scatterlink",
     "company_logo_url": "https://www.google.com/s2/favicons?domain=scatterlink.com&sz=128",
     "title": "Backend Engineer",
@@ -361,9 +674,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Scatterlink** is actively hiring for **Backend Engineer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Andheri, Maharashtra / Mumbai, Maharashtra**.\n\n### Key Details\n- **Role:** Backend Engineer\n- **Company:** Scatterlink\n- **Location:** Andheri, Maharashtra / Mumbai, Maharashtra\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/backend-engineer-scatterlink-1763523",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -371,7 +684,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_17",
+    "id": "f737c64a-7cf6-4862-94e3-38a7e98c38e5",
     "company_name": "InsightsTap Solutions (OPC) Pvt. Ltd.",
     "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-IFHok35pAz1114636356WFOQwqZWZY.png",
     "title": "Backend Developer",
@@ -383,9 +696,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**InsightsTap Solutions (OPC) Pvt. Ltd.** is actively hiring for **Backend Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Kolkata, West Bengal**.\n\n### Key Details\n- **Role:** Backend Developer\n- **Company:** InsightsTap Solutions (OPC) Pvt. Ltd.\n- **Location:** Kolkata, West Bengal\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/backend-developer-insightstap-solutions-opc-pvt-ltd-1760633",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -393,7 +706,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_18",
+    "id": "460a8d1b-3235-4962-b3f0-0d72412d3eff",
     "company_name": "Dhecoded AI",
     "company_logo_url": null,
     "title": "Backend Developer",
@@ -405,9 +718,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Dhecoded AI** is actively hiring for **Backend Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Mumbai, Maharashtra**.\n\n### Key Details\n- **Role:** Backend Developer\n- **Company:** Dhecoded AI\n- **Location:** Mumbai, Maharashtra\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/backend-developer-dhecoded-ai-1774109",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -416,7 +729,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_19",
+    "id": "3aa1ada1-349f-4254-b784-d4603787d00a",
     "company_name": "Alps Insurance Brokers Pvt Ltd",
     "company_logo_url": null,
     "title": "Backend Developer",
@@ -428,9 +741,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Alps Insurance Brokers Pvt Ltd** is actively hiring for **Backend Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Delhi, Delhi**.\n\n### Key Details\n- **Role:** Backend Developer\n- **Company:** Alps Insurance Brokers Pvt Ltd\n- **Location:** Delhi, Delhi\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/backend-developer-alps-insurance-brokers-pvt-ltd-1773319",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -438,7 +751,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_20",
+    "id": "2e32759d-1326-458f-b948-a6ded18d3628",
     "company_name": "Esoft lab",
     "company_logo_url": null,
     "title": "Backend Engineer",
@@ -450,9 +763,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Esoft lab** is actively hiring for **Backend Engineer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Thiruvananthapuram, Kerala**.\n\n### Key Details\n- **Role:** Backend Engineer\n- **Company:** Esoft lab\n- **Location:** Thiruvananthapuram, Kerala\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/backend-engineer-esoft-lab-1792373",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -460,7 +773,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_21",
+    "id": "e4c3498c-f778-49cc-a297-4af685d4d6e5",
     "company_name": "Bright Digi Gold",
     "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-3BHCYMsKjv1656245945Jp6yGtn6mL.png",
     "title": "Frontend Developer",
@@ -472,9 +785,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Bright Digi Gold** is actively hiring for **Frontend Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **India (Pan-India)**.\n\n### Key Details\n- **Role:** Frontend Developer\n- **Company:** Bright Digi Gold\n- **Location:** India (Pan-India)\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/frontend-developer-bright-digi-gold-603561",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -482,7 +795,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_22",
+    "id": "2e6eae0c-cd9d-4ea0-8705-4919397d47cb",
     "company_name": "Step1 Advertising",
     "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-9x035QExIR1293199524hnifvLDzUV.png",
     "title": "Frontend Developer",
@@ -494,9 +807,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Step1 Advertising** is actively hiring for **Frontend Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **India (Pan-India)**.\n\n### Key Details\n- **Role:** Frontend Developer\n- **Company:** Step1 Advertising\n- **Location:** India (Pan-India)\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/frontend-developer-step1-advertising-650158",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -504,7 +817,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_23",
+    "id": "0c04b945-6a8a-4e58-9372-f31f7af2c97c",
     "company_name": "Bluebrain Solutions",
     "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-AzDZOEbiEG1145831055TsN0O2ERw5.png",
     "title": "Frontend Developer",
@@ -516,9 +829,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Bluebrain Solutions** is actively hiring for **Frontend Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **India (Pan-India)**.\n\n### Key Details\n- **Role:** Frontend Developer\n- **Company:** Bluebrain Solutions\n- **Location:** India (Pan-India)\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/frontend-developer-bluebrain-solutions-1049565",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -526,7 +839,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_24",
+    "id": "59db7b94-bca0-47b8-bbbb-d44922f65755",
     "company_name": "Underpin Services",
     "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-18tySGLjpk784366580RKNyaqa2VA.png",
     "title": "Frontend Developer",
@@ -538,9 +851,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Underpin Services** is actively hiring for **Frontend Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **India (Pan-India)**.\n\n### Key Details\n- **Role:** Frontend Developer\n- **Company:** Underpin Services\n- **Location:** India (Pan-India)\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/frontend-developer-underpin-services-1162505",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -548,7 +861,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_25",
+    "id": "e7eee80e-252e-4272-b12f-784575bee635",
     "company_name": "Unnanu",
     "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-7VuvdlfwlP1228641221Yz0ia8wXaC.png",
     "title": "Frontend Developer",
@@ -560,9 +873,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Unnanu** is actively hiring for **Frontend Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **India (Pan-India)**.\n\n### Key Details\n- **Role:** Frontend Developer\n- **Company:** Unnanu\n- **Location:** India (Pan-India)\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/frontend-developer-unnanu-enterprise-ai-search-1411098",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -570,7 +883,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_26",
+    "id": "84763263-3845-4255-b572-2ed7cf448ef9",
     "company_name": "Sphinxhire.Ai Private Limited",
     "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-46Ft6fw9sp530421566bYA4AWUzIH.png",
     "title": "Frontend Developer",
@@ -582,9 +895,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Sphinxhire.Ai Private Limited** is actively hiring for **Frontend Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **India (Pan-India)**.\n\n### Key Details\n- **Role:** Frontend Developer\n- **Company:** Sphinxhire.Ai Private Limited\n- **Location:** India (Pan-India)\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/frontend-developer-sphinxhireai-private-limited-1445484",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -593,7 +906,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_27",
+    "id": "50e32b2e-ee12-46cd-b10f-f90e9bb9c154",
     "company_name": "Selah Digital",
     "company_logo_url": "https://media.licdn.com/dms/image/v2/D560BAQEzCWYHdiWkwQ/company-logo_100_100/company-logo_100_100/0/1736778660265/selahdigital_logo?e=2147483647&v=beta&t=N2ZItwXKMLhnYw38R52JbemKpoWZWU2AHBQU4dOSo2M",
     "title": "Full Stack Software Engineer Intern",
@@ -601,13 +914,13 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "location": "Bengaluru, Karnataka, India",
     "experience_min": 0,
     "experience_max": 0,
-    "experience_label": "0-1 Years",
+    "experience_label": "0-0 Years",
     "stipend_or_salary": "Competitive / Market standard",
     "description": "We are looking for a Full Stack Software Engineer Intern who is passionate about building products from scratch and excited to work with modern AI-powered development tools.\nWhat You'll Do:\nBuild and develop product features from scratch across frontend and backend\nDevelop APIs, business logic, database integrations, and user interfaces\nDebug, test, and deploy applications\nWork with Git/GitHub and follow good coding practices\nTake ownership of features from requirement to development to delivery\nCollaborate with the team and learn new technologies as needed\nThis internship is a potential pathway to a Full-Time Software Engineer role. Conversion will be based on technical ability, problem-solving, ownership, code quality, teamwork, and overall contribution to the product.\nRequirements\nTechnical Skills:\nJavaScript/TypeScript, React.js\nBackend experience with Node.js / Python / Java or equivalent\nKnowledge of REST APIs and SQL databases\nGood understanding of Data Structures, OOP, and problem-solving\nFamiliarity with Git/GitHub\nAI Skills:\nComfortable using ChatGPT, Claude, GitHub Copilot, Cursor, or similar AI tools\nAbility to use AI for coding, debugging, testing, research, and documentation\nMust be able to understand, review, and validate AI-generated code\nExperience with LLM/AI APIs is a plus\nWhat We're Looking For:\nStrong builder mindset and ability to work independently\nFast learner with good problem-solving skills\nTakes ownership and can turn requirements into working features\nUses AI to work smarter and faster while maintaining strong engineering fundamentals\nEducation: Computer Science, IT, Engineering, or related field. Strong personal projects and practical experience are highly valued.\nBenefits\nHands-on experience working on real products\nExposure to healthcare tech domain\nWork with modern AI-powered development tools\nInternship completion certificate\nCompetitive and skills-based stipend\nPotential pathway to a Full-Time Software Engineer role\nCollaborative and fast-paced work environment",
     "apply_url": "https://www.linkedin.com/jobs/view/4475769875",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Python",
@@ -619,7 +932,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_28",
+    "id": "73cb5b26-0a94-4ced-a3aa-b6b17429b2fd",
     "company_name": "Syntrex Technology",
     "company_logo_url": "https://img.naukimg.com/logo_images/groups/v1/12554052.gif",
     "title": "Business Analyst / Data Analyst & Data Science",
@@ -631,9 +944,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "₹3.5 - 6.5 LPA",
     "description": "**Role Overview:**\n\nThe Business Analyst & Data Analyst will be responsible for analyzing business requirements, collecting and interpreting data, preparing reports, identifying trends, and providing data-driven insights to support business decisions and improve organizational performance.\n\n**Key Responsibilities**\n\n1. Gather, analyze, and document business requirements from stakeholders and clients.\n2. Collect, clean, validate, and organize data from multiple sources.\n3. Analyze business data to identify trends, patterns, opportunities, and areas for improvement.\n4. Prepare business reports, dashboards, and presentations using MS Excel, SQL, Power BI, or Tableau.\n5. Perform data analysis and generate meaningful insights to support strategic and operational decisions.\n6. Develop and maintain MIS reports, KPI dashboards, and performance tracking reports.\n7. Work with cross-functional teams to understand business challenges and recommend suitable solutions.\n8. Conduct business process analysis and identify opportunities for process improvement and automation.\n9. Perform data validation, reconciliation, and quality checks to ensure data accuracy and consistency.\n10. Translate business requirements into functional specifications, analytical reports, and actionable recommendations.\n11. Monitor business performance against key performance indicators (KPIs).\n12. Present analytical findings and business insights to management and relevant stakeholders.\n\n**Required Skills**\n\n* Advanced MS Excel Pivot Tables, VLOOKUP, XLOOKUP, and data analysis\n* SQL – Queries, joins, filtering, and database analysis\n* Power BI / Tableau – Dashboard and report development\n* Data cleaning, validation, and visualization\n* Business requirement analysis and documentation\n* MIS reporting and KPI tracking\n* Analytical thinking and problem-solving\n* Good communication and presentation skills\n\n**Candidate Profile**\n\n* Bachelor's degree in B.E., B.Tech, BCA, BBA, B.Com, B.Sc., MCA, MBA, or a related field.\n* Freshers and experienced candidates can apply.\n* Basic knowledge of business analysis, data analytics, and reporting tools.\n* Strong logical reasoning, analytical, and problem-solving abilities.\n* Willingness to learn new technologies and work on business-related data projects.\n\n  \n\n**Preferred candidate profile**",
     "apply_url": "https://www.naukri.com/job-listings-business-analyst-data-analyst-data-science-syntrex-technology-hyderabad-pune-bengaluru-0-to-0-years-261126010889",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "SQL",
@@ -643,7 +956,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_29",
+    "id": "5ef64293-2012-48bf-aec6-6699b4eddb60",
     "company_name": "Medpace Clinical Research India",
     "company_logo_url": "https://img.naukimg.com/logo_images/groups/v1/4725119.gif",
     "title": "Entry Level Software QA Test Engineer",
@@ -652,18 +965,18 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "experience_min": 0,
     "experience_max": 1,
     "experience_label": "0-1 Years",
-    "stipend_or_salary": "Competitive Fresher CTC",
+    "stipend_or_salary": "Competitive Market Standard",
     "description": "**Title**\n\nMedpace is growing rapidly, and we are currently seeking full-time, Junior Software QA Test Engineers (Validation Engineer) to join our growing Information Technology (IT) team in Mumbai office. \n\n**Overview**\n\nMedpace is a full-service clinical contract research organization (CRO) providing phase l-lV clinical development services to the biotechnology, pharmaceutical, and medical device industries. Our mission is to accelerate the global development of safe and effective medical therapeutics through the advancement of clinical research. We leverage in-country regulatory and therapeutic expertise across all major therapeutic areas including oncology, cardiology, metabolic, endocrinology, central nervous system, and anti-viral and anti-infective. Headquartered in Cincinnati, Ohio, we employ more than 6,500 people across 40+ countries.\n\n**Responsibilities**\n\n* Work closely with developers and end users throughout the software life cycle to ensure that applications meet the needs of the users;\n* Perform testing using a variety of test methodologies, including manual, exploratory, and automated testing;\n* Create and maintain test cases, test plans, and other documentation for projects;\n* Participate in constructive peer review of test cases;\n* Identify and report software defects and inconsistencies;\n* Review, analyze, and supplement requirement specifications, and ensure 100% test coverage; and\n* Help facilitate execution of acceptance test scripts by end users\n\n**Qualifications**\n\n* Bachelor’s degree in Computeer Science, Information Systems or related field;\n* Experience writing and executing manual testing for complex software applications; experience in automated testing is a plus!\n* Experience communicating and working within cross-departmental teams consisting of software developers, department leads, and end users;\n* Excellent computer skills; analytical, written, and oral communication skills; and\n* Experience in the regulated healthcare industry is a plus.\n\nWhen you join Medpace, you become part of an innovative team that brings cutting-edge therapies to market while building a meaningful and rewarding career focused on scientific excellence and improving patient outcomes around the world through continuous learning and cross-functional collaboration.\n\n***Purpose-Driven Work***\n\n* + Work alongside physicians, scientists, and industry-leading experts committed to advancing the global development of medical therapeutics through clinical research excellence\n\n***Collaborative Culture***\n\n* + Contribute to an interactive team environment that empowers decision making, creative thinking, and continuous learning through open communication and mutual trust.\n  + Leadership throughout Medpace is both accessible and approachable\n\n***Continuous Growth & Development***\n\n* + Office based environment with on-site mentors\n  + Defined career paths with clear advancement opportunities\n  + Industry renowned onboarding and training programs designed to accelerate professional development\n  + Ongoing training and continuous learning opportunities throughout your career\n  + An environment that encourages employees to influence change, contribute ideas, and grow quickly\n\n***Other Employee Benefits***\n\n* + Competitive compensation programs that recognize and reward performance\n  + Comprehensive health, wellness, retirement, and PTO benefits\n  + Office based culture with occasional WFH that provides flexibility for eligible positions after training\n  + Company-sponsored social events\n\n*Please note benefits may vary based on country.*\n\n**What to Expect Next**\n\nA Medpace team member will review your application and if your profile matches our current needs, you will be contacted for an interview. While we review all applications carefully, we are unable to respond to every applicant, and only candidates selected for interviews will be contacted.",
     "apply_url": "https://www.naukri.com/job-listings-entry-level-software-qa-test-engineer-medpace-clinical-research-india-navi-mumbai-0-to-1-years-070126031462",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026"
     ]
   },
   {
-    "id": "lead_30",
+    "id": "82536d4e-dbf8-4991-b89a-022061fed1dc",
     "company_name": "Serenovolante Software Services Private Limited",
     "company_logo_url": null,
     "title": "Frontend Developer",
@@ -675,9 +988,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Serenovolante Software Services Private Limited** is actively hiring for **Frontend Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **India (Pan-India)**.\n\n### Key Details\n- **Role:** Frontend Developer\n- **Company:** Serenovolante Software Services Private Limited\n- **Location:** India (Pan-India)\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/frontend-developer-serenovolante-software-services-private-limited-1510077",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -685,7 +998,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_31",
+    "id": "afb14351-12af-42e8-9844-20483d1a2e16",
     "company_name": "Kutumb",
     "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-Wo37yNRXAv1493845730Hp7UUBurPa.png",
     "title": "Frontend Developer",
@@ -697,9 +1010,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Kutumb** is actively hiring for **Frontend Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Bangalore Urban, Karnataka**.\n\n### Key Details\n- **Role:** Frontend Developer\n- **Company:** Kutumb\n- **Location:** Bangalore Urban, Karnataka\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/frontend-developer-kutumb-1558504",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -707,7 +1020,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_32",
+    "id": "67d30f54-6fc2-422a-8c6a-6b16d16152a0",
     "company_name": "Eonverse",
     "company_logo_url": "https://www.google.com/s2/favicons?domain=eonverse.com&sz=128",
     "title": "Frontend Developer",
@@ -719,9 +1032,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Eonverse** is actively hiring for **Frontend Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Hyderabad, Telangana**.\n\n### Key Details\n- **Role:** Frontend Developer\n- **Company:** Eonverse\n- **Location:** Hyderabad, Telangana\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/frontend-developer-eonverse-1634859",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -729,7 +1042,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_33",
+    "id": "61e5f9b5-2efb-4063-8225-5ede140dbf5f",
     "company_name": "Research Engine",
     "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-EF22R9gUhs1613055244NYRD5QpyvT.png",
     "title": "Frontend Developer",
@@ -741,9 +1054,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Research Engine** is actively hiring for **Frontend Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Navi Mumbai, Maharashtra**.\n\n### Key Details\n- **Role:** Frontend Developer\n- **Company:** Research Engine\n- **Location:** Navi Mumbai, Maharashtra\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/frontend-developer-research-engine-1642518",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -751,7 +1064,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_34",
+    "id": "18585c5c-c2d3-427e-ac2a-eab58d7a90e3",
     "company_name": "Unstop",
     "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/partners75/698e2ae4cd044_Unstop-Logo-Blue-Large.png",
     "title": "Frontend Engineer",
@@ -763,9 +1076,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Unstop** is actively hiring for **Frontend Engineer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Delhi, Delhi**.\n\n### Key Details\n- **Role:** Frontend Engineer\n- **Company:** Unstop\n- **Location:** Delhi, Delhi\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/crp-frontend-engineer-unstop-1607433",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -773,7 +1086,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_35",
+    "id": "bd3948c7-3806-4a17-b774-50cbf321d0bd",
     "company_name": "Revalsys Technologies Pvt. Ltd.",
     "company_logo_url": "https://www.google.com/s2/favicons?domain=revalsys.com&sz=128",
     "title": "Frontend Developer",
@@ -785,9 +1098,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Revalsys Technologies Pvt. Ltd.** is actively hiring for **Frontend Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Hyderabad, Telangana**.\n\n### Key Details\n- **Role:** Frontend Developer\n- **Company:** Revalsys Technologies Pvt. Ltd.\n- **Location:** Hyderabad, Telangana\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/frontend-developer-revalsys-technologies-pvt-ltd-1681875",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -795,7 +1108,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_36",
+    "id": "f0bb4804-0b66-4da9-9c74-1d8579c002f6",
     "company_name": "Stellaris Infinite",
     "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-uXEniHRY9211113757JJgXs8EZ9T.png",
     "title": "Frontend Engineer",
@@ -807,9 +1120,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Stellaris Infinite** is actively hiring for **Frontend Engineer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Cochin, Kerala**.\n\n### Key Details\n- **Role:** Frontend Engineer\n- **Company:** Stellaris Infinite\n- **Location:** Cochin, Kerala\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/frontend-engineer-stellaris-infinite-1699950",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -817,7 +1130,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_37",
+    "id": "23f684b8-e16d-46b7-9f12-3773727c72a0",
     "company_name": "ITSpectrum Solutions Pvt. Ltd.",
     "company_logo_url": "https://www.google.com/s2/favicons?domain=itspectrum.in&sz=128",
     "title": "Frontend Developer",
@@ -829,9 +1142,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**ITSpectrum Solutions Pvt. Ltd.** is actively hiring for **Frontend Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Kolkata, West Bengal**.\n\n### Key Details\n- **Role:** Frontend Developer\n- **Company:** ITSpectrum Solutions Pvt. Ltd.\n- **Location:** Kolkata, West Bengal\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/frontend-developer-itspectrum-solutions-pvt-ltd-1718093",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -839,7 +1152,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_38",
+    "id": "270b43a3-97a0-443e-8190-57061263d00e",
     "company_name": "Persist Ventures",
     "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/partners75/687f7c0f89347_pv.jpeg",
     "title": "Frontend Engineer",
@@ -851,9 +1164,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Persist Ventures** is actively hiring for **Frontend Engineer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **India (Pan-India)**.\n\n### Key Details\n- **Role:** Frontend Engineer\n- **Company:** Persist Ventures\n- **Location:** India (Pan-India)\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/frontend-engineer-persist-ventures-1727498",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -861,7 +1174,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_39",
+    "id": "3f2f5b50-276b-404d-9181-ddf5f0945849",
     "company_name": "Globose Systems and Solution Pvt. Ltd.",
     "company_logo_url": null,
     "title": "Frontend & Backend Software Developer",
@@ -873,9 +1186,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Globose Systems and Solution Pvt. Ltd.** is actively hiring for **Frontend & Backend Software Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Bangalore, Karnataka**.\n\n### Key Details\n- **Role:** Frontend & Backend Software Developer\n- **Company:** Globose Systems and Solution Pvt. Ltd.\n- **Location:** Bangalore, Karnataka\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/front-end-back-end-software-developer-globose-systems-and-solution-pvt-ltd-1774618",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -883,7 +1196,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_40",
+    "id": "08540add-96b7-436d-b9fd-be76c1b79065",
     "company_name": "TECHSPAR SOLUTIONS",
     "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-8U6no2lI9b1972223123wJZLwVkrKr.png",
     "title": "Frontend Developer",
@@ -895,9 +1208,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**TECHSPAR SOLUTIONS** is actively hiring for **Frontend Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **New Delhi, Delhi**.\n\n### Key Details\n- **Role:** Frontend Developer\n- **Company:** TECHSPAR SOLUTIONS\n- **Location:** New Delhi, Delhi\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/frontend-developer-techspar-solutions-1817946",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -905,7 +1218,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_41",
+    "id": "e93b29da-22f4-476b-932a-37e5054339fb",
     "company_name": "VMax Wellness",
     "company_logo_url": "https://media.licdn.com/dms/image/v2/C560BAQEUStsYCt2gKA/company-logo_100_100/company-logo_100_100/0/1660822582168/vmax_fit_logo?e=2147483647&v=beta&t=ljO_O0B6nHb2n1dkOP3u8GLeQGawnpCw-W6GdZGnzkU",
     "title": "Full Stack Developer - Freshers - Onsite",
@@ -917,9 +1230,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "About VMax\nVMax Health Tech is a dynamic, innovative startup revolutionising the health and wellness industry. Our flagship product, FitMom Club, delivers personalized fitness and wellness solutions to mothers worldwide. We are a passionate team committed to creating impactful digital experiences and fostering a culture of continuous learning and growth.\nJob Description\nWe are seeking enthusiastic Fresher Full Stack Developers who have completed a recognized Full Stack Development certification and are eager to begin their career in software development. The ideal candidate should have strong programming fundamentals, hands-on exposure through academic, certification, internship, or personal projects, and a willingness to learn and contribute to real-world products.\nRoles And Responsibilities\nDevelop and maintain web application features using React and Node.js under senior developer guidance\nBuild responsive user interfaces with HTML, CSS, JavaScript, and React\nDevelop and integrate RESTful APIs using Node.js and Express.js\nWork with MySQL databases (queries, data models, CRUD operations)\nCollaborate with product managers, designers, QA engineers, and developers\nWrite clean, reusable, and maintainable code following best practices\nParticipate in code reviews, testing, debugging, and issue resolution\nUse Git for source-code management and collaboration\nSupport integration between backend services and web/mobile applications\nDocument code, APIs, and development work\nContinuously learn new technologies, frameworks, and practices\nEligibility\nFresh graduates / entry-level candidates are welcome\nBachelor's degree in computer science, IT, Engineering, Computer Applications, or related field\nFull Stack Development certification is mandatory\nAt least one full stack project completed (certification, internship, academics, or personal)\nInternship or practical project exposure preferred\nRequired Skills\nGood understanding of HTML, CSS, JavaScript\nBasic to intermediate knowledge of React.js\nBasic knowledge of Node.js and Express.js\nUnderstanding of relational databases (MySQL)\nBasic knowledge of REST APIs and client-server architecture\nFamiliarity with Git/version control\nStrong programming fundamentals, logical thinking, and problem-solving ability\nAbility to debug basic frontend and backend issues\nGood communication skills and teamwork\nStrong learning attitude, ownership, and attention to detail\nPreferred / Added Advantage\nExposure to TypeScript\nKnowledge of MongoDB or Firebase\nExposure to AWS, Azure, or Google Cloud\nBasic understanding of CI/CD, Docker, deployment processes\nFamiliarity with Agile/Scrum development\nUnderstanding of UI/UX principles and responsive design\nExposure to mobile application backend integration\nParticipation in hackathons, coding challenges, open-source projects\nPassion for health, fitness, and consumer-focused digital products\nCertification Requirement\nCandidates must have completed a Full Stack Development certification from a recognized training institute, learning platform, university, or equivalent program. The certification should include practical exposure to frontend, backend, databases, APIs, and project development.\nCulture And Commitment To Inclusion\nAt VMax Health Tech, we foster an inclusive, diverse, and fair workplace where every team member feels valued and respected. We believe diversity drives innovation and strengthens our ability to serve clients.\nWhy Join Us?\nKickstart your software development career with live product experience\nLearn directly from experienced developers and product teams\nGain hands-on exposure across frontend, backend, databases, APIs, and deployment\nWork in a collaborative and supportive startup environment\nOpportunities for professional growth and career advancement\nCompetitive salary and benefits package\nMake a meaningful impact on products used by real customers\nSkills: codings,problem solving,communication",
     "apply_url": "https://www.linkedin.com/jobs/view/4463243315",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "JavaScript",
@@ -931,7 +1244,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_42",
+    "id": "3e1f5157-6205-4488-9e41-f517740a9afe",
     "company_name": "ReliaQuest",
     "company_logo_url": "https://media.licdn.com/dms/image/v2/D4E0BAQEmuV7QzV2A8g/company-logo_100_100/company-logo_100_100/0/1714568863543/reliaquest_logo?e=2147483647&v=beta&t=CgmFfUMgur6QXJ74s5YHnmBH3_7UBGRM7UUWcQySwW4",
     "title": "Associate Software Engineer",
@@ -943,9 +1256,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "Why it’s worth it:\nAre you a passionate Software Engineer who has a proven track record of solving complex problems and being at the forefront of innovation? Pursuing a career at ReliaQuest will allow you to write code and manipulate data in ways that have never been done before, driving automation of threat detection and response for one of the world’s fastest growing industries. You will lead the creation, testing, and deployment of cutting-edge security technology to enterprise customers across the globe. Above all else, this role will allow you to work and learn from some of the most talented people in the business as well as have a direct contribution to the growth and success of RQ.\nThe everyday hustle:\nResearch and develop creative solutions across a wide range of cutting-edge technologies to continuously evolve our platform, GreyMatter.\nCreate REST API’s and integrations between various products to improve and automate our customer’s threat detection.\nManage the continuous integration and deployment processes of complex technologies.\nPerform code reviews to ensure consistent improvement.\nProactively automate and improve all stages of the software development lifecycle.\nInterface closely with various parts of the business, both internally and externally, to ensure all users are leveraging the product with ease and to its full potential.\nProvide support to other team members as well as cultivate a culture of constant collaboration.\nDo you have what it takes?\n0-1 Years of Software Development experience in the following: Java, Spring Boot, and developing in a microservices architecture.\nWhat makes you uncommon?\nHands on experience with one or more of the following technologies (Elasticsearch, Kafka, Apache Spark, Logstash, Hadoop/hive, Tensorflow, Kibana, Athena/Presto/BigTable, Angular, React).\nExperience with cloud platforms such as AWS, GCP, or Azure.\nSolid understanding of unit testing, continuous integration and deployment practices.\nExperience with Agile Methodology.\nHigher education/relevant certifications.",
     "apply_url": "https://www.linkedin.com/jobs/view/4441295095",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Java",
@@ -957,7 +1270,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_43",
+    "id": "ae60462a-2530-46e6-b1ac-ec3bd3dd4cbc",
     "company_name": "Bristlecone",
     "company_logo_url": "https://media.licdn.com/dms/image/v2/D4E0BAQF_r37iLeLbVw/company-logo_100_100/B4EaE9yw3tJcAI-/0/1792038080218/bristlecone_logo?e=2147483647&v=beta&t=_H6vLbU6YklWlZEQgXoVzAkJXbGavNuyaWDeXvA_mPE",
     "title": "Associate Software Engineer",
@@ -969,9 +1282,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "Job Description\nBristlecone India Limited is looking for a motivated Associate Software Engineer to join our team. You will design, develop, and maintain scalable Python applications and APIs that support our SAP S4 HANA initiatives. Working closely with functional consultants and cross‑functional teams, you will translate business requirements into robust technical solutions while adhering to best coding practices and quality standards.\nResponsibilities\nDevelop, test, and maintain Python‑based applications and RESTful APIs supporting S4 HANA processes.\nWrite clean, efficient, and reusable code following coding standards and best practices.\nCollaborate with functional consultants, business analysts, and other developers to gather requirements and deliver solutions.\nDebug, troubleshoot, and optimize application performance and resource utilization.\nIntegrate with relational (MySQL, PostgreSQL) and NoSQL (MongoDB) databases for data storage and retrieval.\nParticipate in code reviews, design discussions, and knowledge‑sharing sessions.\nCreate and maintain technical documentation, including API specs and deployment guides.\nSupport application deployment, monitoring, and maintenance using Git and CI/CD pipelines.\nAssist in containerization efforts using Docker and cloud platforms (AWS/Azure/GCP).\nAdopt Agile development practices and contribute to sprint planning and retrospectives.\nQualifications\nBachelor's degree in Computer Science, IT, Engineering or related field (MCA acceptable).\nStrong programming skills in Python with solid OOP fundamentals.\nExperience building and consuming RESTful APIs and web services.\nProficiency with SQL and databases such as MySQL, PostgreSQL, or MongoDB.\nFamiliarity with version control systems, especially Git.\nUnderstanding of data structures, algorithms, and problem‑solving techniques.\nExposure to Python frameworks like Django, Flask, or FastAPI (preferred).\nBasic knowledge of cloud platforms (AWS, Azure, or GCP) and Docker containers.\nExperience with Agile methodologies and CI/CD pipelines (preferred).\nExcellent communication, teamwork, and a willingness to learn new technologies.\nAbout Us\nABOUT US\nBristlecone is the leading provider of AI-powered application transformation services for the connected supply chain. We empower our customers with speed, visibility, automation, and resiliency – to thrive on change.\nOur transformative solutions in Digital Logistics, Cognitive Manufacturing, Autonomous Planning, Smart Procurement and Digitalization are positioned around key industry pillars and delivered through a comprehensive portfolio of services spanning digital strategy, design and build, and implementation across a range of technology platforms.\nBristlecone is ranked among the top ten leaders in supply chain services by Gartner. We are headquartered in San Jose, California, with locations across North America, Europe and Asia, and over 2,500 consultants. Bristlecone is part of the $19.4 billion Mahindra Group.\nEqual Opportunity Employer\nBristlecone is an equal opportunity employer. All applicants will be considered for employment without attention to race, color, religion, sex, sexual orientation, gender identity, national origin, veteran or disability status .\nInformation Security Responsibilities\nUnderstand and adhere to Information Security policies, guidelines and procedure, practice them for protection of organizational data and Information System.\nTake part in information security training and act while handling information.\nReport all suspected security and policy breach to InfoSec team or appropriate authority (CISO).\nUnderstand and adhere to the additional information security responsibilities as part of the assigned job role.",
     "apply_url": "https://www.linkedin.com/jobs/view/4494623608",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Python",
@@ -983,7 +1296,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_44",
+    "id": "cbdc0859-8d76-4ae4-b6c9-44570546c9be",
     "company_name": "Cin7",
     "company_logo_url": "https://media.licdn.com/dms/image/v2/D560BAQFV_ovVefEBaA/company-logo_100_100/company-logo_100_100/0/1719922622513/cin7_logo?e=2147483647&v=beta&t=6FmqpzOw5Y-seoWsLJ5-Q-nbT1MINXxEzv1QHM5QDiA",
     "title": "Junior Software Engineer",
@@ -995,9 +1308,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "Cin7 is a fast-growing global software company that provides solutions for modern-day product sellers. We help these sellers keep track of their inventory at scale, and help them sell their products across multiple sales channels around the world.\nCin7 is expanding very quickly with a mission to become the leading Inventory Management Software brand in the world, and we are looking for a motivated and driven individual to join the team.\nCin7 India is proud of our culture and has been officially recognised with Great Place to Work® Certification™.\nHow You'll Make An Impact\nAt Cin7, we are transforming the way businesses manage inventory, sales, and operations to make it cheaper, faster, and easier for businesses all over the world to get their products into their customers’ hands.\nWe’re looking for a Junior Software Engineer to join our engineering team and grow with us. This role focuses on .NET development across .NET Framework, .NET, and ASP.NET MVC applications, with some frontend work using JavaScript, HTML, and CSS. You’ll work on our cloud-based SaaS inventory management software, learn from experienced engineers, and use AI tools to help you work faster and build stronger skills.\nThis position requires that you reside in Ahmedabad or Pune, India.\nApplying for this role:\nPlease apply through our careers page so your application is reviewed by our Talent Acquisition team. If you have a genuine connection to someone at Cin7 and they choose to refer you, that's welcome. Please don't send unsolicited connection requests or messages to employees asking for referrals, as this creates extra work for our team and may result in your application not being considered.\nWhat You'll Do\nBuild and maintain features in our cloud-based SaaS inventory management software using .NET technologies.\nWork across the application, database, and frontend layers, including writing API-driven features, writing SQL queries, making UI updates, and working with forms and page layouts.\nUse AI tools to support code generation, debugging, testing, and code review, while ensuring you understand, validate, and take responsibility for the code you contribute.\nCollaborate with product managers, designers, and other developers to understand requirements and deliver solutions.\nWrite and maintain unit and integration tests for the features you build.\nParticipate in code reviews by reviewing other devs' code, learning from feedback, and gradually developing the ability to identify potential issues and suggest improvements.\nLearn from senior engineers and grow toward taking on more complex, end-to-end work over time.\nParticipate in the exploration and implementation of AI-powered features alongside senior engineers.\nWhat You'll Bring\nA bachelor’s degree in Computer Science, Engineering, or a related field, or equivalent professional experience.\nSome practical experience with software development through internships, personal projects, university projects, or professional work.\nHands-on experience with C# and .NET, including ASP.NET MVC or .NET Framework applications.\nFamiliarity with AI-powered development tools and an interest in using them to improve productivity and code quality.\nWorking knowledge of SQL, including writing queries and working with relational databases such as SQL Server.\nUnderstanding of HTML, CSS, and JavaScript, including DOM manipulation and working with API responses.\nFamiliarity with web fundamentals, including HTTP, REST APIs, and client-server communication.\nBasic understanding of unit testing and version control with Git.\nStrong communication skills and a willingness to ask questions and learn.\nIt's a Nice To Have If You Bring\nExperience building or integrating AI or LLM-powered features, such as calling LLM APIs or working with retrieval-based workflows.\nExperience on cloud-based SaaS products, particularly on Microsoft Azure.\nExposure to CI/CD pipelines or agile development environments.\nWhy work at Cin7?\nWe are a fast growing business going through a huge amount of growth.\nYou’ll have the opportunity to work on products that are used by our global customer-base and at the same time you’ll be growing your career and developing new skills.\nHybrid work environment\nWork From Anywhere for 30 days in a six month period\nCelebrate your birthday with a paid day off\nA Global Cin7 Day celebrated companywide, providing you a dedicated holiday to focus on your own wellbeing.\nRecruitment referral bonus\nWork for a Great Place to Work®\nWhy CIN7?\nCIN7 is a leader in one of the most exciting software verticals right now, and we're growing exponentially. We're looking to add people to our team who are passionate about working with a fast growth tech company.\nAt CIN7, we make great products available to everyone. Every month, millions of sales orders flow through our platform reducing the cost, effort and time for product sellers so they can quickly get products to customers and build their brands without worrying about their operations. We pride ourselves on providing Inventory Management and Supply Chain software to help medium-large product businesses thrive in a highly competitive, digital world. CIN7 centrally manages inventory across multiple locations and channels, connecting 500+ systems to support receiving, selling and shipping stock.\nWe value diversity at Cin7, and bring people into the heart of everything we do. We hire, recruit, and promote without regard to race, color, religion, sex, sexual orientation, gender identity or expression, national origin, pregnancy or maternity, veteran status or any other status protected by applicable law. We understand the importance of creating a safe and comfortable work environment and encourage individualism and authenticity in every member of our team.\nWe may use artificial intelligence (AI) tools to support parts of the hiring process, such as reviewing applications, analyzing resumes, or assessing responses and identifying potential inconsistencies or verification signals in application materials based on available information. These tools assist our recruitment team but do not replace human judgment. Final hiring decisions are ultimately made by humans. If you would like more information about how your data is processed, please contact us.",
     "apply_url": "https://www.linkedin.com/jobs/view/4487044689",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       ".NET",
@@ -1009,7 +1322,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_45",
+    "id": "2f911e11-d6d8-4e77-9106-47643c66d91f",
     "company_name": "Light & Wonder",
     "company_logo_url": "https://media.glassdoor.com/sql/6943496/light-and-wonder-squareLogo-1681768232952.png",
     "title": "Associate Software Engineer (Java)",
@@ -1021,9 +1334,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "₹7.2 - 9.9 LPA",
     "description": "**iGaming:**  \nIf it’s iGaming, we know a thing or two. At Light & Wonder, It’s all about the games, and our digital team leads the global iGaming market, providing jaw-dropping content and innovative software that powers the world's most successful online gaming providers.\n\n**Position Summary**\n\n**About Company**\n\nLight & Wonder is a global leader in game experiences. We create content, hardware and systems that connect iconic titles across any place or channel. By turning games into expansive entertainment, we keep thrilling players with characters and stories they can’t get enough of.\n\nLight & Wonder, Inc. is the leading cross-platform global games company. Through our three unique, yet highly complementary business segments, we deliver unforgettable experiences by combining the exceptional talents of our 7,500+ member team, with a deep understanding of our customers and players. We create immersive content that forges lasting connections with players, wherever they choose to engage. At Light & Wonder, it’s all about the games. The Company is committed to the highest standards of integrity, from promoting player responsibility to implementing sustainable practices. To learn more visit www.lnw.com .\n\nWe are committed to offering very competitive benefits that are aligned with our values and inspire employees to drive innovation and contribute to the organization’s performance. Employees are the most valued resource, and we always look to improve their well-being with a wide range of benefits befitting every individual. Not limited to monetary benefits, we have robust learning and development opportunities that help them to grow professionally.\n\nOur Values\n\n* Dare to be bold: We combine diverse talent to look at the familiar in unfamiliar ways.\n* Celebrate perspectives - We combine diverse talent to look at the familiar in unfamiliar ways\n* Never settle: We relentlessly push forward to create the extraordinary in every detail.\n* Uphold integrity: We promote accountability and respect to raise the bar for ourselves and the industry.\nWin as a team: We bring out the best in each other to share collective success.  \n\n  \n\n**Associate/Senior Associate Java Engineer**\n\n* **Job Location:** Commerzone IT Park, Yerwada, Pune\n\n* **Required Experience:** 1-3 years\n\n* **Work Mode –** Full Time - 4 Days at Office (Mandatory)\n\n  \n\n**Job Description**\n\nWe are seeking a talented **Associate Backend Software Engineer** to design and build scalable backend services and APIs. You will work on core platform components, optimize performance, and collaborate with cross‑functional teams to deliver high‑quality software solutions.\n\n  \n\n**Key Responsibilities**\n\n* Develop, test, and maintain backend services and APIs using **Java** and **Spring Boot** .\n* Build scalable, reliable, and secure microservices.\n* Write clean, maintainable, and testable code following best practices.\n* Collaborate closely with Product, QA, and DevOps teams to deliver features end‑to‑end.\n* Participate in design discussions, code reviews, and technical brainstorming.\n* Troubleshoot production issues and contribute to continuous improvements.\nImplement CI/CD pipelines, automation, and observability best practices.  \n\n  \n\n**Required Qualifications**\n\n* **1-3 years** of experience in backend development.\n* Strong hands‑on experience with **Java 8+** , Spring Framework, Spring Boot.\n* Solid understanding of **REST APIs** , microservices architecture, and multithreading.\n* Experience with relational and NoSQL databases (e.g., PostgreSQL, MySQL, MongoDB).\n* Familiarity with Docker, Kubernetes, Git, and CI/CD tools.\n* Strong understanding of data structures, algorithms, and object‑oriented principles.\nGood problem‑solving, debugging, and analytical skills.  \n\n  \n\n**Preferred Skills**\n\n* Experience with message queues like Kafka, RabbitMQ.\n* Knowledge of cloud platforms (AWS/Azure/GCP).\n* Familiarity with API gateways and service discovery.\n* Understanding of caching technologies (Redis, Hazelcast).\nExposure to performance and load testing.  \n\n  \n\n**Soft Skills**\n\n* Strong communication and teamwork skills.\n* Attention to detail, ownership, and a willingness to learn.\nAbility to work in an agile development environment  \n\n  \n\n**Mode Of Interview: (Participation in at least 1 face-to-face discussion is mandatory)**\n\n  \n\n* Screening Round\n* In Person Technical Interview\n* Director Interview\n* HR Discussion\n\n**Qualifications**\n\nWhy would you enjoy working with us at **Light & Wonder** ?\n\n* Competitive benefits, an open and supportive environment as well as a modern and exciting workplace.\n\n* The opportunity to interact with global teams on a regular basis and the possibility to switch teams and projects as you and our business continues to develop and grow.\n\nExciting projects with opportunities for creating positive change to our game engineering ecosystem.  \n\n\n\nAnd if that is not enough; you will get to enjoy a **stunning work location** and **flexible hybrid working** whilst we provide you with the guidance and **development skills** you need to progress quickly and **enhance your career** .",
     "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010334523328",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Java",
@@ -1035,7 +1348,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_46",
+    "id": "c789b0fa-88e8-4c9e-94e8-5e92e548b165",
     "company_name": "AltissAdvance Technologies Private Limited",
     "company_logo_url": "https://www.google.com/s2/favicons?domain=altissadvance.com&sz=128",
     "title": "Full Stack Developer – Fresher Program",
@@ -1047,9 +1360,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "₹6,500 - 6,500 / month",
     "description": "**Fresher to Full-Time Opportunity**\n\nWe're looking for passionate and self-motivated **Full Stack Developer Freshers** who are eager to learn, build, and grow while working on real-world products. This program gives you the flexibility to focus on **Frontend, Backend, or Database Development**, or explore multiple areas of the stack based on your interests and strengths.\n\nYou'll work alongside experienced developers, contribute to live products, and gain practical exposure to modern technologies used in production environments.\n\nResponsibilities\n\nWork on one or more of the following areas based on your chosen focus:\n\nFrontend\n\n* Build responsive and user-friendly interfaces using HTML, CSS, JavaScript, and React.\n* Collaborate with designers and developers to create intuitive user experiences.\n* Optimize applications for speed and performance.\n\nBackend\n\n* Develop and maintain REST APIs using Python and FastAPI.\n* Write clean, scalable, and maintainable backend code.\n* Integrate frontend applications with backend services.\n\nDatabase\n\n* Design, manage, and optimize PostgreSQL databases.\n* Write efficient SQL queries and maintain data integrity.\n* Assist in database performance optimization and migrations.\n\nTech Stack You'll Work With\n\n**Frontend**\n\n* HTML\n* CSS\n* JavaScript\n* React\n\n**Backend**\n\n* Python\n* FastAPI\n\n**Database**\n\n* PostgreSQL\n\nWhat We're Looking For\n\n* Basic understanding of one or more of the technologies mentioned above.\n* Strong willingness to learn and adapt to new technologies.\n* Good analytical and problem-solving skills.\n* Ability to work collaboratively in a team environment.\n* Good communication skills.\n* Recent graduates or freshers looking to build a career in software development.\n\nWhat You'll Gain\n\n* Hands-on experience working on live products.\n* Mentorship from experienced software engineers.\n* Exposure to modern software development practices.\n* Opportunity to specialize in Frontend, Backend, or Database Development.\n* Performance-based Letter of Recommendation.\n* Opportunity to transition into a full-time developer role based on performance.\n\nFresher to Full-Time Opportunity\n\n* **First 3 Months:** ₹5,000/month + Conveyance Allowance up to ₹1,500/month.\n* **Months 4-6:** ₹7,500/month + Conveyance Allowance up to ₹1,500/month.\n* **Post 6 Months:** Opportunity to transition into a **Full-Time Full Stack Developer** role with a salary of **₹12,500/month + ₹1,500/month Conveyance Allowance**, based on performance.\n\n**Starting Salary:** ₹5,000/month + Conveyance Allowance up to ₹1,500/month\n\nPay: ₹6,500.00 per month\n\nApplication Question(s):\n\n* Do you live in Mumbai?\n* Have you read the job description thoroughly?\n* Will you be available to work from 10 AM to 7 PM, Monday to Friday?\n* Can you travel to our office in Matunga West (5 minutes from Matunga Road railway station, 10 minutes from Matunga Central railway station, and 10 minutes from Dadar or Sitladevi Metro stations)?\n* Do you know FastAPI and React?\n* Have you created any projects using FastAPI/React?\n* Please provide your LinkedIn profile URL. If you do not have one, you may write “N/A.”\n* Can you commit to this Fresher Program for 6 months?\n* Do you acknowledge that you will receive ₹5,000 + Conveyance Allowance up to ₹1,500 per month for the first 3 months, then ₹7,500 + Conveyance Allowance up to ₹1,500 per month for the next 3 months, followed by a performance-based full-time opportunity with a salary of ₹12,500 + ₹1,500 Conveyance Allowance?\n\nWork Location: In person",
     "apply_url": "https://in.indeed.com/viewjob?jk=ed179674008eb9b8",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Python",
@@ -1061,7 +1374,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_47",
+    "id": "8d2211c7-c2f2-41dd-9df2-46adacd3dec1",
     "company_name": "Hevo Data",
     "company_logo_url": "https://media.glassdoor.com/sql/2022361/hevo-data-squareLogo-1763798943070.png",
     "title": "Associate SDE- Pune",
@@ -1073,9 +1386,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "₹3 - 8.8 LPA",
     "description": "**Location:** Pune, India. This role is based out of our Baner office.  \n  \n**What we are building**\n\n* We are building an AI system that creates data connectors by itself and keeps them working by itself.\n* No engineer should need to manually build every connector. No engineer should need to come back six months later because the source API changed.\n* Work that traditionally takes weeks or months should take hours. But building a connector is not the hardest part.\n* The real question is: Would you trust this system to run by itself, with nobody watching, for months?\n* That is the job.\n\n  \n\n**What you’ll own as Associate SDE at Hevo:**\n\n* Implement SaaS connectors for assigned applications, learning application specific nuances like basic auth and data extraction.\n* Assist in building simple REST API components, focusing on clean implementation and testing.\n* Debug and optimize code for data pipeline efficiency under mentorship.\n* Contribute to feature breakdown, coding, and documentation for smaller tasks.\n* Apply logical thinking to solve integration issues and improve component quality.\n* Build internal tools with AI for business teams to run their functions\n\n  \n\n**What you’ll bring to the table:**\n\n* Basic object-oriented programming skills and familiarity with design principles.\n* Exposure to data pipelines or APIs; eagerness to learn concurrency and performance basics.\n* Foundational knowledge of REST APIs (e.g., making calls, handling JSON) – no deep expertise needed.\n* Proficiency in Java/TypeScript/Python, good problem-solving with data structures and algorithms.\n* Strong analytical and logical thinking for real-world challenges.\n\n  \n\n**Candidate Persona:**\n\n* Freshers with experience in software development, ideally with internships in integrations or data tools.\n* B Tech in Computer Science or equivalent from a reputed college.\n\n  \n\n**Why this role:**\n\n* Very few teams are building autonomous AI systems that operate production infrastructure where being wrong has real consequences.\n* This is not a chatbot. It is infrastructure that has to remain correct, quietly, for months.\n* If that kind of problem excites you, there are not many places working on it this early.\n* You can talk to anyone in the company, including the CEO.\n* What you are trusted with depends on what you can do, not your title.\n\n  \n\n**About Hevo:**\n\n* Hevo is a Series B data infrastructure company with $42M raised.\n* More than 2,000 companies across 40 plus countries use Hevo to move data from more than 150 sources into platforms such as Snowflake and BigQuery.\n* Our customers include DoorDash, Shopify, Pinterest, Postman and Icelandair.\n* Our engineering team is built in India, and so are the decisions.\n* We are not the remote engineering office of a US company.\n* The people building the product are the people deciding what to build.\n\nWe may use artificial intelligence (AI) tools to support parts of the hiring process, such as reviewing applications, analyzing resumes, or assessing responses and identifying potential inconsistencies or verification signals in application materials based on available information. These tools assist our recruitment team but do not replace human judgment. Final hiring decisions are ultimately made by humans. If you would like more information about how your data is processed, please contact us.",
     "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010335801716",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Python",
@@ -1087,7 +1400,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_48",
+    "id": "a95e8ce0-4e2e-4847-9ed1-bc73d603ad8e",
     "company_name": "Rich System Solutions pvt ltd",
     "company_logo_url": null,
     "title": "Full Stack Developer",
@@ -1099,9 +1412,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Rich System Solutions pvt ltd** is actively hiring for **Full Stack Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Nashik, Maharashtra**.\n\n### Key Details\n- **Role:** Full Stack Developer\n- **Company:** Rich System Solutions pvt ltd\n- **Location:** Nashik, Maharashtra\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/full-stack-developer-rich-system-solutions-pvt-ltd-1827400",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -1109,7 +1422,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_49",
+    "id": "d70b5ae5-d0d8-4cb0-b91e-b719c60648b7",
     "company_name": "GAO Tek Inc.",
     "company_logo_url": "https://www.google.com/s2/favicons?domain=gaotek.com&sz=128",
     "title": "Web Developer",
@@ -1121,9 +1434,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**GAO Tek Inc.** is actively hiring for **Web Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **India (Pan-India)**.\n\n### Key Details\n- **Role:** Web Developer\n- **Company:** GAO Tek Inc.\n- **Location:** India (Pan-India)\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/web-developer-gao-tek-inc-1826970",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -1131,7 +1444,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_50",
+    "id": "fa502757-ed32-4ee1-8e49-6139b8d41b6a",
     "company_name": "Sallet IT Soft Pvt Ltd",
     "company_logo_url": null,
     "title": "Software Engineer",
@@ -1143,9 +1456,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Sallet IT Soft Pvt Ltd** is actively hiring for **Software Engineer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Bangalore, Karnataka**.\n\n### Key Details\n- **Role:** Software Engineer\n- **Company:** Sallet IT Soft Pvt Ltd\n- **Location:** Bangalore, Karnataka\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/software-engineer-sallet-it-soft-pvt-ltd-1709993",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -1153,7 +1466,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_51",
+    "id": "30c4bef3-004d-4adb-b940-96e77a354621",
     "company_name": "Mybytes Technologies",
     "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-4tfoUJkrc71070374744IDJCgMklne.png",
     "title": "Junior Software Engineer",
@@ -1165,9 +1478,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Mybytes Technologies** is actively hiring for **Junior Software Engineer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Gurgaon, Haryana**.\n\n### Key Details\n- **Role:** Junior Software Engineer\n- **Company:** Mybytes Technologies\n- **Location:** Gurgaon, Haryana\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/junior-software-engineer-mybytes-technologies-1740011",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -1175,7 +1488,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_52",
+    "id": "1c46a978-b8eb-46c7-9bb6-03583123492f",
     "company_name": "Zynvixs Pvt. Ltd.",
     "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-Iwiv7RSlAK1546313951PHoR41L2Nc.png",
     "title": "Software Engineer",
@@ -1187,9 +1500,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Zynvixs Pvt. Ltd.** is actively hiring for **Software Engineer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Mumbai, Maharashtra**.\n\n### Key Details\n- **Role:** Software Engineer\n- **Company:** Zynvixs Pvt. Ltd.\n- **Location:** Mumbai, Maharashtra\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/software-engineer-zynvixs-pvt-ltd-1749735",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -1197,7 +1510,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_53",
+    "id": "6cc18b96-0f1c-43fb-8584-1b104f7a97a7",
     "company_name": "xVector Labs Inc",
     "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-aOfchGglFO451953538Ith6YDT41I.png",
     "title": "Software Engineer",
@@ -1209,9 +1522,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**xVector Labs Inc** is actively hiring for **Software Engineer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **India (Pan-India)**.\n\n### Key Details\n- **Role:** Software Engineer\n- **Company:** xVector Labs Inc\n- **Location:** India (Pan-India)\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/software-engineer-xvector-labs-inc-1710384",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -1219,7 +1532,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_54",
+    "id": "b8438ef0-d59b-4a2d-8bd1-0c2850ad4a45",
     "company_name": "Proverse Talent",
     "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-qy3enB6qmD1839726155KNdGwXwy4S.png",
     "title": "Fullstack Software Engineer",
@@ -1231,9 +1544,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Proverse Talent** is actively hiring for **Fullstack Software Engineer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Bangalore, Karnataka**.\n\n### Key Details\n- **Role:** Fullstack Software Engineer\n- **Company:** Proverse Talent\n- **Location:** Bangalore, Karnataka\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/fullstack-software-engineer-proverse-talent-1769819",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -1241,7 +1554,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_55",
+    "id": "0960f6be-9d04-435c-8482-b523ff6038e0",
     "company_name": "Opticent Private limited",
     "company_logo_url": null,
     "title": "Full Stack Software Engineer",
@@ -1253,9 +1566,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Opticent Private limited** is actively hiring for **Full Stack Software Engineer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Bangalore, Karnataka**.\n\n### Key Details\n- **Role:** Full Stack Software Engineer\n- **Company:** Opticent Private limited\n- **Location:** Bangalore, Karnataka\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/full-stack-software-engineer-opticent-private-limited-1765892",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -1263,7 +1576,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_56",
+    "id": "5257a863-6c62-4ed7-8aa4-be1a8a02e3e1",
     "company_name": "VirtUp",
     "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-cVoEpeatwW1355787943UndMv4zfZz.png",
     "title": "Software Engineer",
@@ -1275,9 +1588,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**VirtUp** is actively hiring for **Software Engineer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **India (Pan-India)**.\n\n### Key Details\n- **Role:** Software Engineer\n- **Company:** VirtUp\n- **Location:** India (Pan-India)\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/software-engineer-virtup-1728074",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -1285,7 +1598,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_57",
+    "id": "7613b4d1-d5df-4269-99a1-b3d3792ebc97",
     "company_name": "vishenera.com",
     "company_logo_url": "https://www.google.com/s2/favicons?domain=vishenera.com&sz=128",
     "title": "Software Engineer",
@@ -1297,9 +1610,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**vishenera.com** is actively hiring for **Software Engineer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Varanasi, Uttar Pradesh**.\n\n### Key Details\n- **Role:** Software Engineer\n- **Company:** vishenera.com\n- **Location:** Varanasi, Uttar Pradesh\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/software-engineer-visheneracom-1739954",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -1307,7 +1620,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_58",
+    "id": "2c1d4ef3-be5f-4b40-9566-ea9b392a06ab",
     "company_name": "Mellow Vault",
     "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-VnvJWTOgds6505681658PDH7r9FFP.png",
     "title": "Software Engineer",
@@ -1319,9 +1632,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Mellow Vault** is actively hiring for **Software Engineer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Noida, Uttar Pradesh**.\n\n### Key Details\n- **Role:** Software Engineer\n- **Company:** Mellow Vault\n- **Location:** Noida, Uttar Pradesh\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/software-engineer-mellow-vault-1770302",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Unstop",
@@ -1329,7 +1642,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_59",
+    "id": "29b88a39-ed95-4ebc-ab8e-7fccde520b6c",
     "company_name": "DigiPlus IT",
     "company_logo_url": "https://media.licdn.com/dms/image/v2/D4D0BAQGvlBSAl5WJfw/company-logo_100_100/B4DaAV6PyiKAAI-/0/1787073985902/digiplusit_logo?e=2147483647&v=beta&t=9S9ZaLyJf7EyaYL_0zhDVef2hdN1dEPPCLQlDtZiqHU",
     "title": "Software Engineer Intern",
@@ -1337,13 +1650,13 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "location": "Borivali, Maharashtra, India",
     "experience_min": 0,
     "experience_max": 0,
-    "experience_label": "0-1 Years",
+    "experience_label": "0-0 Years",
     "stipend_or_salary": "Competitive / Market standard",
     "description": "Location: Borivali, Mumbai\nAre currently pursuing or have completed a B.E./B.Tech degree.\nResponsibilities\nSoftware Development (75%)\n* Develop, test, and maintain modern web applications using Node.js, TypeScript, and React.js.\n* Build scalable and responsive frontend interfaces along with robust backend services.\n* Design, develop, and integrate RESTful APIs to support application functionality.\n* Troubleshoot, debug, and optimize applications to ensure high performance and reliability.\n* Write clean, maintainable, and efficient code following industry best practices and coding standards.\n* Work with databases, data models, and application architecture to support business requirements.\n* Participate in the complete software development lifecycle, from requirement analysis and planning to deployment and maintenance.\n* Collaborate with senior engineers on system design, code reviews, and technical discussions.\n* Contribute to testing, documentation, and continuous improvement initiatives.\n* Use Git and modern development workflows for version control and team collaboration.\nCloud & Operations (25%)\n* Assist in deploying and managing applications on AWS cloud infrastructure.\n* Support CI/CD pipelines to streamline development and release processes.\n* Work with Linux-based systems and development environments.\n* Develop and maintain automation scripts to improve operational efficiency and developer productivity.\n* Monitor application performance, system health, and service availability.\n* Gain hands-on experience with cloud technologies, infrastructure management, and deployment best practices.\n* Participate in troubleshooting deployment, infrastructure, and environment-related issues.\nSkills & Technologies\nSoftware Development\n* Node.js\n* TypeScript\n* React.js\n* JavaScript (ES6+)\n* REST API Development\n* Git & Version Control\n* Object-Oriented Programming (OOP)\n* Problem Solving & Debugging\nCloud & Operations\n* AWS Fundamentals\n* Linux Basics\n* CI/CD Concepts\n* Shell Scripting\n* Cloud Computing Fundamentals\nRequirements\n* Are currently pursuing or have completed a B.E./B.Tech degree.\n* Have built personal, academic, freelance, or internship projects.\n* Maintain an active GitHub profile showcasing real code and contributions.\n* Have participated in hackathons, coding competitions, or technical events.\n* Demonstrate strong logical thinking and problem-solving skills.\n* Have a genuine interest in software engineering and product development.\n* Are self-learners who enjoy exploring new technologies and frameworks.\n* Communicate clearly and collaborate effectively within a team.",
     "apply_url": "https://www.linkedin.com/jobs/view/4478984742",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "JavaScript",
@@ -1355,7 +1668,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_60",
+    "id": "42a0f184-fc18-4e21-a74a-91d2dca86a6f",
     "company_name": "Experiences Digital",
     "company_logo_url": "https://media.licdn.com/dms/image/v2/C4E0BAQF2Kr9okDzdqw/company-logo_100_100/company-logo_100_100/0/1654840232175/experiences_digital_logo?e=2147483647&v=beta&t=jvtdNuhOme_XZRng21imMwuYYtioMFB8T2BitnoE0yc",
     "title": "Full Stack Development Internship in Gurgaon",
@@ -1363,19 +1676,19 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "location": "Gurgaon, Haryana, India",
     "experience_min": 0,
     "experience_max": 0,
-    "experience_label": "0-1 Years",
+    "experience_label": "0-0 Years",
     "stipend_or_salary": "Competitive / Market standard",
     "description": "Work on the development and maintenance of our e-commerce platform across frontend and backend.\nDevelop new features and functionality for the e-commerce platform.\nBuild and integrate APIs and backend business logic.\nWork with databases and manage product, catalogue, inventory, customer, and order data.\nAbout Company: Experiences.digital has successfully created, launched, and managed various websites, mobile applications & e-commerce projects. Our client base is very diverse from luxury retailers to manufacturing companies. Being a technology & innovative communication company we have a wealth of cross-category experience in cloud networking, digital marketing, web & app development, branding & creative services right up to the last mile.",
     "apply_url": "https://www.linkedin.com/jobs/view/4491211255",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026"
     ]
   },
   {
-    "id": "lead_61",
+    "id": "be0c225e-d16f-4ed4-8653-796c6261b2f6",
     "company_name": "Vahan.ai",
     "company_logo_url": "https://media.licdn.com/dms/image/v2/D560BAQHjLFslG_y9ww/company-logo_100_100/B56aHGT2c0IUAI-/0/1794328456085/vahan_inc__logo?e=2147483647&v=beta&t=FaYcvuDP6NIX80aWnGUlSNws1dczdWss_ngQvuA_PKU",
     "title": "Software Engineer Intern",
@@ -1383,13 +1696,13 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "location": "Bengaluru, Karnataka, India",
     "experience_min": 0,
     "experience_max": 0,
-    "experience_label": "0-1 Years",
+    "experience_label": "0-0 Years",
     "stipend_or_salary": "Competitive / Market standard",
     "description": "About Vahan\nVahan is a YC-backed AI-powered hiring marketplace connecting blue-collar workers with employment opportunities at scale. We're building technology that transforms how India's frontline workforce finds jobs.\nAbout the Role\nWe're looking for a Software Development Engineer Intern to join our engineering team for a 6-month internship. You'll work on real, production-facing features across our stack — building and shipping code that impacts how millions of workers access job opportunities.\nWhat You'll Do\nBuild and ship features across the frontend (React) and backend (Node.js, PostgreSQL)\nWrite clean, maintainable, well-tested code and participate in code reviews\nCollaborate closely with senior engineers, product managers, and designers on feature design and implementation\nDebug and resolve issues in existing systems\nContribute to technical discussions and bring fresh perspective to engineering decisions\nWhat We're Looking For\nStrong fundamentals in React (component architecture, state management, hooks) and Node.js (REST APIs, async patterns)\nWorking knowledge of PostgreSQL — schema design, queries, basic optimization\nMust have completed at least one prior internship\nin a software engineering role\nSolid understanding of data structures, algorithms, and problem-solving\nComfortable working in a fast-paced startup environment with high ownership\nStrong communication skills and ability to work collaboratively with cross-functional teams\nCurrently pursuing or recently completed a degree in Computer Science or a related field\nGood to Have\nFamiliarity with Git and collaborative development workflows\nExposure to cloud platforms (AWS/GCP) or CI/CD pipelines\nPrior experience building or contributing to a production application\nWhat You'll Get\nHands-on experience building production systems used at scale\nDirect mentorship from senior engineers\nHigh ownership from day one — you'll ship real features, not just tickets\nA front-row seat to how a fast-growing startup operates",
     "apply_url": "https://www.linkedin.com/jobs/view/4484071621",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "React",
@@ -1401,7 +1714,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_62",
+    "id": "e9717247-70fa-4c0a-be38-276a1dae65b0",
     "company_name": "GeminiSoft Technologies Pvt. Ltd",
     "company_logo_url": "https://media.licdn.com/dms/image/v2/D560BAQHWU0D9FsSkcQ/company-logo_100_100/B56Zp0OlJVJ4AQ-/0/1762886573270?e=2147483647&v=beta&t=s9YADBBLod7lHmZGJLT8Y5apv5lQhcuR-KGBbk52PSU",
     "title": "Software Engineer Intern",
@@ -1409,13 +1722,13 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "location": "Bengaluru East, Karnataka, India",
     "experience_min": 0,
     "experience_max": 0,
-    "experience_label": "0-1 Years",
+    "experience_label": "0-0 Years",
     "stipend_or_salary": "Competitive / Market standard",
     "description": "Home › Careers › Software Engineer Intern\nSoftware Engineer Intern\nLocation\nBangalore / Remote\nEmployment\nInternship\nExperience\nFresher / final year\nVacancies\n03\nBuild and ship real features on client projects, with code review from senior engineers and a mentor from day one.\nWhere you'll work\nGeminiSoft builds websites, web apps, mobile apps and AI tools for clients across India, and runs a few products of its own. You join a small team, work on live client projects from week one, and see the result ship. Build and ship real features on client projects, with code review from senior engineers and a mentor from day one.\nWhat you'll do\nBuild features and fix bugs on live web applications\nWrite clean, tested code and take part in code reviews\nWork with APIs, databases and a modern frontend framework\nLearn how production systems are deployed and monitored\nPresent what you built to the team at the end of the internship\nWhat we need from you\nPursuing or recently completed a degree in computer science or a related field\nWorking knowledge of one stack: React, Next.js, Node.js, Python or Laravel\nProjects or a GitHub profile you can walk us through\nWillingness to learn quickly and ask good questions\nNice to have\nExperience with SQL or a NoSQL database\nBasic Git, Docker or cloud knowledge\nOpen-source contributions or hackathons\nInterest in AI tools and automation\nHow we hire\nInitial screen (45 min, video) → take-home or live exercise scoped to the role (≤ 4 hours) → on-site / video panel with the team you'd join → offer within 7 days of the panel. We share feedback at every stage, whether you proceed or not.\nReady to apply?\nSubmit your CV and a short note about why this role. Questions? Write to us at careers@geminisoft.in.\nApply for this role\nQuestions? Email careers@geminisoft.in\nOther open roles\nSoftware Engineer Sales Development Representative HR Intern Recruiter Intern Social Media Manager Content Creator (Social Media) Public Relations Manager",
     "apply_url": "https://www.linkedin.com/jobs/view/4486378372",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Python",
@@ -1427,7 +1740,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_63",
+    "id": "8a1f551f-67f7-4f77-a696-0a475d70c831",
     "company_name": "MEL Systems and Services Ltd.",
     "company_logo_url": "https://media.licdn.com/dms/image/v2/C560BAQE0qLrRWgtJPg/company-logo_100_100/company-logo_100_100/0/1631390779884?e=2147483647&v=beta&t=uOfuYlIIvxiuyFYnQIPR9vG0WDlw_jN2vikBLthuEd8",
     "title": "Software Developer Intern",
@@ -1435,13 +1748,13 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "location": "Chennai, Tamil Nadu, India",
     "experience_min": 0,
     "experience_max": 0,
-    "experience_label": "0-1 Years",
+    "experience_label": "0-0 Years",
     "stipend_or_salary": "Competitive / Market standard",
     "description": "Job Information\nDate Opened 10/21/2025\nJob Type Intern\nIndustry Electronics\nWork Experience Fresher\nCity Chennai\nState/Province Tamil Nadu\nCountry India\nZip/Postal Code 600096\nJob Description\nJob Summary\nWe are looking for enthusiastic and detail-oriented\nSoftware Development Interns\nto join our\nACD SW Department\n. The interns will assist in developing and maintaining\nin-house software tools and applications\nusing\nPython\nKey Responsibilities\nAssist in the design, development, and maintenance of Python-based in-house applications and utilities.\nSupport automation of internal processes, data handling, and reporting tasks.\nDevelop and maintain backend scripts, API integrations, and database-driven modules.\nParticipate in the creation of user interfaces (UI) using frameworks such as Tkinter or PyQt.\nCollaborate with the team to understand requirements and translate them into functional code.\nTest, debug, and optimize developed software for performance and reliability.\nPrepare documentation, user guides, and version tracking for developed modules.\nExplore and suggest improvements or new tools to enhance productivity and efficiency.\nRequirements\nTechnical Skills Required\nGood understanding of Python programming and object-oriented principles.\nExperience with GUI frameworks (added advantage).\nFamiliarity with databases such as SQLite, MySQL, PostgreSQL or MongoDB.\nUnderstanding of REST APIs, JSON, and data parsing.\nExposure to file automation, report generation, or data visualization libraries (Pandas, Matplotlib, OpenPyXL).\nBasic experience with Git/GitHub for version control.\nOptional: Knowledge of Flask/Django for web-based internal tools.\nEligibility & Qualifications\nPursuing B.E/B.Tech/M.E/M.Tech/BCA/MCA in Computer Science, IT, or related discipline.\nFinal year students or recent graduates preferred.\nPrior mini-projects or academic work using Python will be an advantage.\ncheck(event) ; career-website-detail-template-2 => apply(record.id,meta)\" mousedown=\"lyte-button => check(event)\" final-style=\"background-color:#2791D0;border-color:#2791D0;color:white;\" final-class=\"lyte-button lyteBackgroundColorBtn lyteSuccess\" lyte-rendered=\"\">",
     "apply_url": "https://www.linkedin.com/jobs/view/4317770784",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Python",
@@ -1453,7 +1766,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_64",
+    "id": "5cc54d04-0e2d-4c71-890a-88b7e57a34a7",
     "company_name": "SaaSFlex",
     "company_logo_url": "https://media.licdn.com/dms/image/v2/D4D0BAQHJwP2ABqpPwg/company-logo_100_100/B4DZmbNHk9GsAY-/0/1759245532627/saasflex_logo?e=2147483647&v=beta&t=fNYTiwJ9vvEl1MTOzmaGmN-eHid_W_0mkGKGLPPchwo",
     "title": "Software Development Engineer (SDE) Intern - ClockFlex",
@@ -1461,13 +1774,13 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "location": "Greater Ahmedabad Area",
     "experience_min": 0,
     "experience_max": 0,
-    "experience_label": "0-1 Years",
+    "experience_label": "0-0 Years",
     "stipend_or_salary": "Competitive / Market standard",
     "description": "Team: Engineering\nLocation: Ahmedabad (On-site)\nPosted: Nov 5, 2025\nDuration: 4–6 months\nStipend: Based on skills and performance\nWe are looking for passionate\nSoftware Development Engineer (SDE) Interns\nto join our\nClockFlex\nproduct team at\nSaaSFlex\n. You’ll work closely with our senior developers to design, develop, and optimize modules for our next-gen scheduling and productivity platform.\nWhat You'll Do\nContribute to front-end development using Angular, TypeScript, and Bootstrap.\nAssist in building secure APIs using .NET 8 and integrating with SQL Server.\nWork on database queries, stored procedures, and schema design for real features.\nParticipate in code reviews, testing, and debugging under senior developer guidance.\nCollaborate on UI/UX improvements, bug fixes, and performance optimization.\nWrite clean, well-documented, and maintainable code following team standards.\nWhat We're Looking For\nBasic understanding of Angular, HTML/CSS, and TypeScript.\nKnowledge of C#, .NET Core, and SQL Server is a plus.\nStrong problem-solving skills and a good grasp of data structures & algorithms.\nEagerness to learn new technologies and contribute to a production SaaS product.\nAvailable to work on-site from our Ahmedabad office.\nB.Tech / B.E / MCA students in final year or recent graduates preferred.\nWhat You'll Learn\nEnd-to-end SaaS architecture and cloud deployment workflows.\nHow to design modular and scalable Angular components.\nAPI integration, database optimization, and version control best practices.\nAgile workflow, Git collaboration, and Azure DevOps basics.\nPerks\nCertificate of Internship & LOR for top performers.\nPerformance-based stipend & full-time conversion opportunity.\nDirect mentorship from experienced developers and team leads.\nAccess to live SaaS project codebases and tools.\nIf you’re eager to learn, code, and build something that real businesses use every day — this internship is the perfect start to your SaaS engineering career.",
     "apply_url": "https://www.linkedin.com/jobs/view/4444262929",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "TypeScript",
@@ -1479,7 +1792,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_65",
+    "id": "c766afea-6830-4c06-95e2-f9896d03f9f0",
     "company_name": "Genesis Technologies India",
     "company_logo_url": "https://media.licdn.com/dms/image/v2/D4D0BAQFQDBpc2ppTdg/company-logo_100_100/company-logo_100_100/0/1737456253118/genesis_technologies_india_logo?e=2147483647&v=beta&t=-1pKFX8vWlx6fxlYm1XJyp5ybnQUW4ydwGI4tgojusg",
     "title": "Associate Software Engineer",
@@ -1491,9 +1804,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "Who Are We Looking For\nPassionate programmer : With a solid foundation in at least one modern programming language (Java, PHP, or .NET).\nTech-savvy : Demonstrated understanding of web technologies like HTML, CSS, and JavaScript.\nProblem-solver : Ability to analyze problems logically and devise effective solutions.\nQuick learner : A proactive and flexible attitude towards acquiring new skills, technologies, and methodologies.\nTeam player : Proven ability to collaborate effectively in a team-oriented environment.\nDetail-oriented : Meticulous attention to detail and a commitment to producing high-quality work.\nCommunicator : Excellent verbal and written communication skills to interact effectively with stakeholders.\nWhat You Will Be Doing\nContribute to development : Contribute to software projects through coding, unit testing, debugging, and documentation.\nContinuous learning : Participate in training sessions and workshops to stay updated on software development methodologies, tools, and coding standards.\nCollaborate : Work closely with senior developers, project managers, and other team members to understand project requirements and deliver high-quality solutions.\nSeek feedback : Incorporate code reviews and feedback to improve code quality and adherence to best practices.\nTroubleshoot : Identify and resolve software defects and technical issues.\nDocument : Prepare and maintain technical documentation, including code comments, user manuals, and system documentation.\nStay updated : Keep informed about emerging technologies and best practices in software development.\nBonus Points for Familiarity with\nVersion control : Familiarity with version control systems like Git.\nDevelopment tools : Experience with IDEs (e.g., Visual Studio Code, Eclipse) and other development tools.\nMVC architecture : Knowledge of Model-View-Controller (MVC) architecture.\nEducational Requirement\nB.E/B.Tech/M.Tech/MCA/MSc (All Streams)",
     "apply_url": "https://www.linkedin.com/jobs/view/4443783075",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Java",
@@ -1504,7 +1817,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_66",
+    "id": "43400b63-81ba-4e04-b4d8-870e20a4bd29",
     "company_name": "Vollmoon Technologies",
     "company_logo_url": "https://media.licdn.com/dms/image/v2/D560BAQHAAdBRoM_6NA/company-logo_100_100/B56Z4vfOh.HkAM-/0/1778913175939/vollmoon_technologies_logo?e=2147483647&v=beta&t=VY1vWG3UZT1Km-DhS8bhcCTGgXOx4TnCwrzjgFCMvfU",
     "title": "Software Engineer",
@@ -1516,9 +1829,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "Company:\nVollmoon Technologies\nWebsite:\nVisit Website\nBusiness Type:\nStartup\nCompany Type:\nProduct & Service\nBusiness Model:\nB2B\nFunding Stage:\nBootstrapped\nIndustry:\nHealthcare and Fintech\nJob Description\nRole Overview\nWe are looking for passionate\nfreshers with strong JavaScript fundamentals\nwho are interested in working on\nbackend technologies like Java or Node.js\n. The candidate will be trained and work on building scalable applications.\nKey Responsibilities\nWrite clean and efficient code using JavaScript\nAssist in backend development using Node.js or Java\nWork on API development and integration\nDebug, test, and fix issues in applications\nCollaborate with team members to deliver projects\nWhat We’re Looking For\nStrong understanding of JavaScript fundamentals.\nFamiliarity with Node.js or Java is a plus.\nPassion for coding, learning, and solving problems.\nGood logical thinking and problem-solving skills.\nAbility to work well in a team environment and communicate effectively.\nEagerness to learn new technologies and contribute to real projects.\nWhat You Will Gain\nHands-on experience in backend application development.\nTraining and mentorship from experienced engineers.\nExposure to real-world projects, API development, and cloud technologies.\nFoundation for a career in software engineering with growth opportunities.\nIdeal Candidate\nRecent graduate or fresher in Computer Science, IT, or related fields.\nStrong analytical and coding skills in JavaScript.\nMotivated, proactive, and ready to learn in a fast-paced environment.",
     "apply_url": "https://www.linkedin.com/jobs/view/4387818518",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Java",
@@ -1527,7 +1840,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_67",
+    "id": "63e59516-7693-4662-b0a1-a08139788406",
     "company_name": "Amazon",
     "company_logo_url": "https://media.licdn.com/dms/image/v2/D560BAQGDLy4STCnHbg/company-logo_100_100/B56ZnZxDipI0AQ-/0/1760295142304/amazon_logo?e=2147483647&v=beta&t=qIUP7OofXIuuuVACb5ToeWH9PHXrPYsS8jsTZ3Q0sUg",
     "title": "Software Dev Engineer I, Amazon University Talent Acquisition",
@@ -1539,9 +1852,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "₹16 - 26 LPA (Estimated)",
     "description": "Description\n\"This role is intended for 2026 and 2025 graduates only.\"\nAt Amazon, we hire the best minds in technology to innovate and build on behalf of our customers. The focus we have on our customers is why we are one of the world’s most beloved brands – customer obsession is part of our company DNA. Our Software Development Engineers (SDEs) use cutting-edge technology to solve complex problems and get to see the impact of their work first-hand. The challenges SDEs solve for at Amazon are big and influence millions of customers, sellers, and products around the world. We are looking for individuals who are passionate about creating new products, features, and services from scratch while managing ambiguity and the pace of a company where development cycles are measured in weeks, not years. If this sounds interesting to you, apply and come chart your own path at Amazon.\nApplications are reviewed on a rolling basis. For an update on your status, or to confirm your application was submitted successfully, please login to your candidate portal. NOTE: Amazon works with a high volume of applicants, so we appreciate your patience as we review applications\nKey job responsibilities\nCollaborate with experienced cross-disciplinary Amazonians to conceive, design, and bring innovative products and services to market.\nDesign and build innovative technologies in a large distributed computing environment and help lead fundamental changes in the industry.\nCreate solutions to run predictions on distributed systems with exposure to innovative technologies at incredible scale and speed.\nBuild distributed storage, index, and query systems that are scalable, fault-tolerant, low cost, and easy to manage/use.\nDesign and code the right solutions starting with broadly defined problems.\nWork in an agile environment to deliver high-quality software.\nBasic Qualifications\nBachelor's degree or above in computer science, computer engineering, or related field\nKnowledge of Computer Science fundamentals such as object-oriented design, algorithm design, data structures, problem solving, and complexity analysis.\nKnowledge of programming languages such as C/C++, Python, Java or Perl\nPreferred Qualifications\nPrevious technical internship(s).\nExperience with distributed, multi-tiered systems, algorithms, and relational databases.\nExperience in optimization mathematics such as linear programming and nonlinear optimization.\nEffectively articulate technical challenges and solutions.\nAdept at handling ambiguous or undefined problems as well as ability to think abstractly.\nOur inclusive culture empowers Amazonians to deliver the best results for our customers. If you have a disability and need a workplace accommodation or adjustment during the application and hiring process, including support for the interview or onboarding process, please visit https://amazon.jobs/content/en/how-we-hire/accommodations for more information. If the country/region you’re applying in isn’t listed, please contact your Recruiting Partner.\nnull\nCompany\n- ADCI - Karnataka\nJob ID: A10611128",
     "apply_url": "https://www.linkedin.com/jobs/view/4494627599",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Tier-1 Tech",
@@ -1553,7 +1866,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_68",
+    "id": "3c9447b9-05fe-4343-8e7b-be63cf0880ed",
     "company_name": "Rubrik",
     "company_logo_url": "https://www.google.com/s2/favicons?domain=rubrik.com&sz=128",
     "title": "Software Engineer (CPD) - Winter Intern",
@@ -1561,13 +1874,13 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "location": "Bangalore",
     "experience_min": 0,
     "experience_max": 0,
-    "experience_label": "0-1 Years",
+    "experience_label": "0-0 Years",
     "stipend_or_salary": "₹40,000 - ₹1,00,000 / month (Estimated)",
     "description": "ABOUT THE JOB\n We are looking for a Software Engineer - Intern to join our Continuous Product Development (CPD) team in Bangalore. We believe in giving engineers responsibility, not tasks. Our goal is to motivate and challenge people to do their best work. To do that, we have a very fluid structure and give people the flexibility to work on projects that they enjoy the most. This develops more capable engineers and keeps everyone engaged and happy.\n\n About CPD \n\n CPD stands for Continuous Product Development. CPD-SWE is the part of the engineering org that focuses on E2E ownership of established products.\n\n Responsibilities \n\n Identify and solve bottlenecks within our software stack by\n\n Design, develop, test, deploy, maintain, and improve the software.\n\n Manage individual project priorities, deadlines, and deliverables with your technical expertise.\n\n About You\n Interns are self-starters, driven, and can manage themselves. Bottom line, if you have a limitless drive and like to win, we want to talk to you - come make history! \n\n Bachelor’s or Master’s degree, preferably in Computer Science\n\n Proficiency in one or more general-purpose object-oriented programming languages like Java, C/C++, Scala, Python\n\n Minimum eligibility criteria\n - CGPA 8 and above\n- 2027 graduates of Circuital branches only\n- Available from January 2027 to May 2027 in Bangalore for the onsite internship (No remote options)\n\n Join Us in Securing and Accelerating the World's AI Transformation \n Rubrik (NYSE: RBRK) is the Security and AI Operations Company, delivering one platform built at the intersection of data, identity, and AI. The platform enables agentic cyber resilience and trusted AI operations for enterprises worldwide, built to recover before disruption strikes and stay a step ahead, so security is never the reason ambition stalls.\n\n Linkedin | X (formerly Twitter) | Instagram | Rubrik.com \n\n Inclusion @ Rubrik \n At Rubrik, we are dedicated to fostering a culture where people from all backgrounds are valued, feel they belong, and believe they can succeed. Our commitment to inclusion is at the heart of our mission to secure the world’s data.\n\n Our goal is to hire and promote the best talent, regardless of background. We continually review our hiring practices to ensure fairness and strive to create an environment where every employee has equal access to opportunities for growth and excellence. We believe in empowering everyone to bring their authentic selves to work and achieve their fullest potential.\n\n Our inclusion strategy focuses on three core areas of our business and culture: \n\n Our Company: We are committed to building a merit-based organization that offers equal access to growth and success for all employees globally. Your potential is limitless here.\n\n Our Culture: We strive to create an inclusive atmosphere where individuals from all backgrounds feel a strong sense of belonging, can thrive, and do their best work. Your contributions help us innovate and break boundaries.\n\n Our Communities: We are dedicated to expanding our engagement with the communities we operate in, creating opportunities for underrepresented talent and driving greater innovation for our clients. Your impact extends beyond Rubrik, contributing to safer and stronger communities.\n\n Equal Opportunity Employer/Veterans/Disabled \n Rubrik is an Equal Opportunity Employer. All qualified applicants will receive consideration for employment without regard to race, color, religion, sex, sexual orientation, gender identity, national origin, age, disability, genetic information, protected veteran status, or any other status protected by applicable law. Rubrik provides equal employment opportunities to employees and applicants in all terms and conditions of employment, including recruiting, hiring, promotion, compensation, training, leave, and termination.\n\n Rubrik provides reasonable accommodations to qualified applicants and employees with disabilities in accordance with applicable law. If you need an accommodation to participate in the application process or to perform your job, please contact hr@rubrik.com . Accommodations may include changes to the application process, documents in an alternate format, a sign language interpreter, or specialized equipment.\n\n EEO IS THE LAW \n\n NOTIFICATION OF EMPLOYEE RIGHTS UNDER FEDERAL LABOR LAWS",
     "apply_url": "https://www.rubrik.com/company/careers/departments/job.8166537?gh_jid=8166537",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 26 Nov 2026",
       "Python",
@@ -1580,7 +1893,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_69",
+    "id": "bdc9b9dd-e0b2-4959-8f6c-c9c02d44a5d2",
     "company_name": "T9 GIC",
     "company_logo_url": "https://www.google.com/s2/favicons?domain=t9gic.com&sz=128",
     "title": "Dot Net Full stack Developer",
@@ -1592,9 +1905,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**T9 GIC** is actively hiring for **Dot Net Full stack Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Hyderabad, Telangana**.\n\n### Key Details\n- **Role:** Dot Net Full stack Developer\n- **Company:** T9 GIC\n- **Location:** Hyderabad, Telangana\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/dot-net-full-stack-developer-t9-gic-1826398",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "Unstop",
@@ -1602,7 +1915,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_70",
+    "id": "b93ae6af-410e-4944-a591-2a4d335a3fbe",
     "company_name": "Prishusoft",
     "company_logo_url": "https://www.google.com/s2/favicons?domain=prishusoft.com&sz=128",
     "title": "ASP.NET MVC/Core Developer",
@@ -1614,9 +1927,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Prishusoft** is actively hiring for **ASP.NET MVC/Core Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Ahmedabad, Gujarat**.\n\n### Key Details\n- **Role:** ASP.NET MVC/Core Developer\n- **Company:** Prishusoft\n- **Location:** Ahmedabad, Gujarat\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/aspnet-mvccore-developer-prishusoft-1826517",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "Unstop",
@@ -1625,7 +1938,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_71",
+    "id": "a342eb3e-9b07-4b88-b536-1ec770724a1d",
     "company_name": "T9 GIC",
     "company_logo_url": "https://www.google.com/s2/favicons?domain=t9gic.com&sz=128",
     "title": ".NET Full Stack Developer",
@@ -1637,9 +1950,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**T9 GIC** is actively hiring for **.NET Full Stack Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Hyderabad, Telangana**.\n\n### Key Details\n- **Role:** .NET Full Stack Developer\n- **Company:** T9 GIC\n- **Location:** Hyderabad, Telangana\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/net-full-stack-developer-t9-gic-1826093",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "Unstop",
@@ -1647,7 +1960,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_72",
+    "id": "d7a40454-406f-4f2e-b9b9-dbf75d7a690e",
     "company_name": "GVI Technology Pvt Ltd",
     "company_logo_url": "https://www.google.com/s2/favicons?domain=gvi.in&sz=128",
     "title": "Python Full-Stack Developer",
@@ -1659,9 +1972,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**GVI Technology Pvt Ltd** is actively hiring for **Python Full-Stack Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Bhubaneswar, Odisha**.\n\n### Key Details\n- **Role:** Python Full-Stack Developer\n- **Company:** GVI Technology Pvt Ltd\n- **Location:** Bhubaneswar, Odisha\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/python-full-stack-developer-gvi-technology-pvt-ltd-1815679",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "Unstop",
@@ -1670,7 +1983,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_73",
+    "id": "58887970-8529-498e-9cc0-f3ca169f71d5",
     "company_name": "Kikbak Financial",
     "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-PWUb2ED9qE18776170973Qj3SqRQYF.png",
     "title": "Frontend Developer (React.js)",
@@ -1682,9 +1995,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Kikbak Financial** is actively hiring for **Frontend Developer (React.js)** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **India (Pan-India)**.\n\n### Key Details\n- **Role:** Frontend Developer (React.js)\n- **Company:** Kikbak Financial\n- **Location:** India (Pan-India)\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/frontend-developer-reactjs-kikbak-financial-1816010",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "Unstop",
@@ -1693,7 +2006,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_74",
+    "id": "124ce7e8-fd00-4033-9f40-7dbab1b2da2b",
     "company_name": "Rexomi Technologies",
     "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-alrE6iYIIu1650309182D1BjTZ45cG.png",
     "title": "Android Application Developer",
@@ -1705,9 +2018,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Rexomi Technologies** is actively hiring for **Android Application Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Kolkata, West Bengal**.\n\n### Key Details\n- **Role:** Android Application Developer\n- **Company:** Rexomi Technologies\n- **Location:** Kolkata, West Bengal\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/android-application-developer-rexomi-technologies-1826303",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "Unstop",
@@ -1716,7 +2029,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_75",
+    "id": "dd09b473-bc05-405f-b2a1-c2ae82b35461",
     "company_name": "Bootcoding Pvt. Ltd.",
     "company_logo_url": "https://www.google.com/s2/favicons?domain=bootcoding.in&sz=128",
     "title": "Agentic AI Developer",
@@ -1728,9 +2041,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Bootcoding Pvt. Ltd.** is actively hiring for **Agentic AI Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Nagapur, Maharashtra**.\n\n### Key Details\n- **Role:** Agentic AI Developer\n- **Company:** Bootcoding Pvt. Ltd.\n- **Location:** Nagapur, Maharashtra\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/agentic-ai-developer-bootcoding-pvt-ltd-1817505",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "Unstop",
@@ -1739,7 +2052,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_76",
+    "id": "c08ea83b-f22e-432c-9893-73a92bbb36fa",
     "company_name": "Corivaone",
     "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-XoiS7dDdYH594406378KWW91Be2cx.png",
     "title": "Web Application Developer",
@@ -1751,9 +2064,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Corivaone** is actively hiring for **Web Application Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Thane, Maharashtra**.\n\n### Key Details\n- **Role:** Web Application Developer\n- **Company:** Corivaone\n- **Location:** Thane, Maharashtra\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/web-application-developer-corivaone-1816920",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "Unstop",
@@ -1761,7 +2074,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_77",
+    "id": "a17a1f8f-16fd-44ba-9f83-2881a79e1388",
     "company_name": "404Minds Technologies",
     "company_logo_url": "https://www.google.com/s2/favicons?domain=404minds.com&sz=128",
     "title": "Java Developer (Fresher)",
@@ -1773,9 +2086,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**404Minds Technologies** is actively hiring for **Java Developer (Fresher)** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **India (Pan-India)**.\n\n### Key Details\n- **Role:** Java Developer (Fresher)\n- **Company:** 404Minds Technologies\n- **Location:** India (Pan-India)\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/java-developer-404minds-technologies-1805358",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "Unstop",
@@ -1784,7 +2097,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_78",
+    "id": "5da4c216-4b92-4df8-966d-b0386abbcb0b",
     "company_name": "T9 GIC",
     "company_logo_url": "https://www.google.com/s2/favicons?domain=t9gic.com&sz=128",
     "title": "Salesforce Developer",
@@ -1796,9 +2109,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**T9 GIC** is actively hiring for **Salesforce Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Hyderabad, Telangana**.\n\n### Key Details\n- **Role:** Salesforce Developer\n- **Company:** T9 GIC\n- **Location:** Hyderabad, Telangana\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/salesforce-developer-t9-gic-1826198",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "Unstop",
@@ -1806,7 +2119,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_79",
+    "id": "d9887aec-cadd-4329-8f9e-0740c2143d7c",
     "company_name": "Vinayan(India) Consulting Services Pvt Ltd",
     "company_logo_url": "https://www.google.com/s2/favicons?domain=vinayan.com&sz=128",
     "title": "AI Developer",
@@ -1818,9 +2131,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Vinayan(India) Consulting Services Pvt Ltd** is actively hiring for **AI Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **New Delhi, Delhi**.\n\n### Key Details\n- **Role:** AI Developer\n- **Company:** Vinayan(India) Consulting Services Pvt Ltd\n- **Location:** New Delhi, Delhi\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/ai-developer-vinayanindia-consulting-services-pvt-ltd-1821137",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "Unstop",
@@ -1829,7 +2142,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_80",
+    "id": "b6b57120-5814-48cd-8550-f545722652d1",
     "company_name": "QubeHealth-Pay",
     "company_logo_url": "https://media.licdn.com/dms/image/v2/C4E0BAQFh4bvDvGQaYw/company-logo_100_100/company-logo_100_100/0/1630642003309/qubehealth_logo?e=2147483647&v=beta&t=XCjbQTLe-qtibcKQQe_hIgaaDc0IPsZI3O9kqH8Ubqk",
     "title": "Software Engineer Intern",
@@ -1837,13 +2150,13 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "location": "Mumbai, Maharashtra, India",
     "experience_min": 0,
     "experience_max": 0,
-    "experience_label": "0-1 Years",
-    "stipend_or_salary": "Competitive Fresher CTC",
+    "experience_label": "0-0 Years",
+    "stipend_or_salary": "Competitive Market Standard",
     "description": "Position Overview\nQube Health is seeking Software Engineers to join the team and help us build world-class user experiences across all of Qube Health's products.\nYou will be a key contributor to the development of our payments, credit and data platforms, and ensure that it allows us to scale with the team as we introduce new products alongside.\nAs a Software Engineer, you are a team player, comfortable with both front-end and back-end technologies, development frameworks and third-party libraries.\nYou will collaborate closely with the technical and non-technical teams in order to develop and deploy high-quality products and features. Your work will allow customers to achieve their goals with our software and our teams to operate more efficiently as our business grows in both size and scope. At Qube Health, Software Engineers own the components involved throughout the product life cycle, from idea generation, design, prototyping, execution and shipping.\nKey Responsibilities\nOwn Software Components/Systems of the Product (Design, Create, Deploy, Maintain).\nMaintain high-quality, responsive designs and components.\nContinuously improve Product components.\nWork and communicate effectively with teams to provide solutions.\nTechnical Requirements\nStrong understanding of programming fundamentals, Data Structures and Algorithms (DSA), and Object-Oriented Programming (OOP).\nProficiency in at least one programming language: Golang, Java, or Python.\nBasic understanding of REST APIs, HTTP methods, status codes, and JSON.\nFamiliarity with SQL and relational databases such as PostgreSQL or MySQL.\nUnderstanding of database concepts, including joins, indexes, primary keys, and foreign keys.\nGood to Have\nKnowledge of HTML, CSS, JavaScript, XML, jQuery.\nKnowledge of Node.js and Flutter.\nUnderstanding of Apache Web Server and NGINX.\nFamiliarity with MongoDB and UI/UX design basics.\nWillingness to learn and improve on Server and client-side technologies.\nKeen to work in the Mobile Programming space.\nExperience\nTrainee Software Engineer, less than 0.5 years of experience at the time of applying.\nAt least one or two short internship experiences preferred.",
     "apply_url": "https://www.linkedin.com/jobs/view/4483617328",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "Tier-1 Tech",
@@ -1856,7 +2169,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_81",
+    "id": "16b0adf5-8e20-471f-8a49-8e89c5bfc969",
     "company_name": "LearnQoch",
     "company_logo_url": "https://media.licdn.com/dms/image/v2/D4D0BAQGoMPgbqGuiYw/company-logo_100_100/B4DZaHkXBNGsAQ-/0/1746031178276/learnqoch_logo?e=2147483647&v=beta&t=K21lYTrYc-ipEGAQHVbEhCKYqYbutrzozbns7aUgwDc",
     "title": "Java Developer",
@@ -1865,12 +2178,12 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "experience_min": 0,
     "experience_max": 1,
     "experience_label": "0-1 Years",
-    "stipend_or_salary": "Competitive Fresher CTC",
+    "stipend_or_salary": "Competitive Market Standard",
     "description": "LearnQoch\n\" data-indicator-icon=\"\" data-dropdown-indicator-icon=\"\" class=\"eael-simple-menu-container eael-simple-menu--loading eael-simple-menu-align-center eael-simple-menu--stretch eael-simple-menu-dropdown-align-left preset-1 eael-simple-menu-link-full-width\" data-hamburger-breakpoints=\"{\"mobile\":\"Mobile Portrait (> 767px)\",\"tablet\":\"Tablet Portrait (> 1024px)\",\"desktop\":\"Desktop (> 2400px)\",\"none\":\"None\"}\" data-hamburger-device=\"tablet\">\nAbout Us\nVision and Mission\nWhy LearnQoch\nLeadership Team\nK12\nAdvanced LMS\nSchool ERP Software\nCoding for Schools\nCareer Assessment\nDigital Marketing\nWebsite Management\nHigher Education\nAdvanced LMS\nHEI ERP Software\nExam Management\nOBE\nNAAC | NBA | NIRF\nSkill Development\nCareer Assessment\nDigital Marketing\nWebsite Management\nAdmission CRM\nBlogs\nSupport\nContact Us\n+918451901079\nLog In\nTry for free\nNew Blog :\nMarketing, Enquiries and Admissions: Is Your Institution Connecting the Dots?\nLog In\nTry for free\nMenu\n\" data-close-icon=\"\" data-full-width=\"yes\">\nAbout Us\nVision and Mission\nWhy LearnQoch\nLeadership Team\nK12\nAdvanced LMS\nSchool ERP Software\nCoding for Schools\nCareer Assessment\nDigital Marketing\nWebsite Management\nHigher Education\nAdvanced LMS\nHEI ERP Software\nExam Management\nOBE\nNAAC | NBA | NIRF\nSkill Development\nCareer Assessment\nDigital Marketing\nWebsite Management\nAdmission CRM\nBlogs\nSupport\nNew Blog :\nMarketing, Enquiries and Admissions: Is Your Institution Connecting the Dots?\nJava Developer\nLearnQoch is AI Powered Software company to augment learning & teaching system through technology. In India, we have more than 320Mn+ students who need personalized assistance to achieve their dreams. We as a LearnQoch team have built digital platform to transform current education system. We invite you to be part of this revolution. We work with Educational Institutes (KG-PG) to provide best in class ERP, LMS and Accreditation Software.\nWe are hiring Java Developer with or without any professional experience.\nEligibility Criteria\nCourses & Discipline: 3 / 4 years Full Time Graduates from B.Tech. – Computer Engineering with a minimum CGPA of 8.5 & above are eligible to apply.\nCourse Types: Only full-time courses will be considered. Part-time or correspondence courses are not eligible. Students who have completed their Secondary and/or Senior Secondary course from NIOS (National Institute of Open Schooling) are also eligible if their other courses are full-time.\nHighest Qualification: It is mandatory to clear and complete the course within the stipulated time duration without any backlogs to be eligible for joining LearnQoch if selected.\nBacklogs/Arrears/ATKT: Up to 1 pending or active backlog/arrear/ATKT is permitted at the time of appearing for the LearnQoch interview process. However, no pending backlogs/arrears/ATKT will be allowed at the time of joining LearnQoch. All pending backlogs/arrears/ATKT must be cleared within the stipulated course duration.\nExtended Education: No extended education will be allowed. Students must complete their course within the stipulated duration.\nGap/Break in Education: It is mandatory to declare gaps in education, if any, in the LearnQoch Application Form. The overall academic gap should not exceed 24 months until the highest qualification. Relevant document proof will be checked for gaps in education.\nWork Experience: Please note that this role is for “Fresher”. Prior work experience, if any, must be declared in the LearnQoch Application Form.\nAge: Minimum age: 18 years, Maximum age: 24 years.\nImportant Notes: Kindly note that LearnQoch has a stringent eligibility criterion and a robust selection process. Your eligibility as per the defined criteria will be checked at various stages of the selection process. At any point of time, if you are found ineligible or if data shared by you is found discrepant, your candidature will be disqualified.\nWe are keen to understand your intention to perform and competency to deliver the desired outcome as a LearnQoch Team. As an organization, we’ll provide all required training to enhance your competency.\nRole: Java Developer\nIndustry Type: B2B – Education Software Development\nFunctional Area: Product Development\nEmployment Type: Full Time\nEducation: UG: B.Tech. – Computer Engineering with a minimum CGPA of 8.5 & above\nSalary Package: INR 5 Lacs to INR 8 Lacs per annum\nLocation: Mumbai / Thane\nContact: +918451901079 / hr@learnqoch.com\nVisit LearnQoch Website: www.LearnQoch.com\nApply Now\nFill in your details, upload your resume and we will get in touch with you, if you are shortlisted.\nApplying position ofB2B Management TraineeDigital Marketing ManagerInside Sales ManagerJava Developer\nLocationThaneMumbai\nUpload your CV\nUpload only PDF or Word file, Limit is 2MB.\nDate\nDesired Skills\nRich Expertise in Java frameworks – Spring MVC, Spring Boot, Hibernate, REST API and Microservices.\nExperience in REST concepts and building/interacting with REST APIs.\nExperience in MYSQL Database.\nExperience in Linux Platform / Ubuntu.\nExperience in AWS Cloud (EC2 deployment, Lambda, AM, etc.).\nExperience in code versioning tools such as Git / GitHub.\nExperience with Postman to test web services.\nExposure to CI & CD tools.\nAbility to Design, Architect, Develop, Test and Deploy applications and maintain existing systems.\nExperience in development tools like IntelliJ IDEA.\nAbility to work in a Scrum environment.\nLearnQoch is a leading Ed-Tech company that provides technology solutions for KG to PG students as per NEP 2020. We work with schools, colleges and universities to make them truly digital.\nLinks\n\" data-indicator-icon=\"\" data-dropdown-indicator-icon=\"\" class=\"eael-simple-menu-container eael-simple-menu--loading eael-simple-menu-align-left eael-simple-menu-dropdown-align-left preset-1 eael-simple-menu-link-full-width\" data-hamburger-breakpoints=\"{\"mobile\":\"Mobile Portrait (> 767px)\",\"tablet\":\"Tablet Portrait (> 1024px)\",\"desktop\":\"Desktop (> 2400px)\",\"none\":\"None\"}\" data-hamburger-device=\"tablet\">\nK12\nHigher Education\nChannel Partner\nCareers\nSupport\nPrivacy Policy\nTerms & Condition\nContact Info\nCall us at +91 84519 01079\nsales@learnqoch.com\n24x7 live chat\n918, Solus, Hiranandani Business Park, Thane West 400607, Maharashtra\nOur Associates\nCopyright © 2020-2026 LearnQoch | All Rights Reserved.\nFacebook Instagram X-twitter Youtube Linkedin\nDo you have any Question?\nAsk about LearnQoch products, pricing, implementation, or anything else. Our perofessional team is ready to assist you.\nBook a Demo For 14 Days\nK12 | Higher Education | Careers | Channel Partner | Support | Privacy Policy | Terms of Use\nCopyright © 2020-2026 LearnQoch | All Rights Reserved.\nFacebook Instagram X-twitter Youtube Linkedin",
     "apply_url": "https://www.linkedin.com/jobs/view/4438624460",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "Tier-1 Tech",
@@ -1883,7 +2196,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_82",
+    "id": "3aee9af9-988e-4796-be7d-771c7fd38873",
     "company_name": "Amazon",
     "company_logo_url": "https://media.licdn.com/dms/image/v2/D560BAQGDLy4STCnHbg/company-logo_100_100/B56ZnZxDipI0AQ-/0/1760295142304/amazon_logo?e=2147483647&v=beta&t=qIUP7OofXIuuuVACb5ToeWH9PHXrPYsS8jsTZ3Q0sUg",
     "title": "Software Dev Engineer I - IIT BHU, Amazon University Talent Acquisition",
@@ -1892,19 +2205,19 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "experience_min": 0,
     "experience_max": 1,
     "experience_label": "0-1 Years",
-    "stipend_or_salary": "Competitive Fresher CTC",
+    "stipend_or_salary": "Competitive Market Standard",
     "description": "Description\n\"This role is intended for 2027 graduates only.\"\nAt Amazon, we hire the best minds in technology to innovate and build on behalf of our customers. The focus we have on our customers is why we are one of the world’s most beloved brands – customer obsession is part of our company DNA. Our Software Development Engineers (SDEs) use cutting-edge technology to solve complex problems and get to see the impact of their work first-hand. The challenges SDEs solve for at Amazon are big and influence millions of customers, sellers, and products around the world. We are looking for individuals who are passionate about creating new products, features, and services from scratch while managing ambiguity and the pace of a company where development cycles are measured in weeks, not years. If this sounds interesting to you, apply and come chart your own path at Amazon.\nApplications are reviewed on a rolling basis. For an update on your status, or to confirm your application was submitted successfully, please login to your candidate portal. NOTE: Amazon works with a high volume of applicants, so we appreciate your patience as we review applications\nKey job responsibilities\nCollaborate with experienced cross-disciplinary Amazonians to conceive, design, and bring innovative products and services to market.\nDesign and build innovative technologies in a large distributed computing environment and help lead fundamental changes in the industry.\nCreate solutions to run predictions on distributed systems with exposure to innovative technologies at incredible scale and speed.\nBuild distributed storage, index, and query systems that are scalable, fault-tolerant, low cost, and easy to manage/use.\nDesign and code the right solutions starting with broadly defined problems.\nWork in an agile environment to deliver high-quality software.\nBasic Qualifications\nAre enrolled in or have completed a Bachelor's degree in computer science or equivalent\nPreferred Qualifications\nBachelor's degree in Computer Science, Computer Engineering, Data Science, Electrical Engineering, or majors relating to these fields\nOur inclusive culture empowers Amazonians to deliver the best results for our customers. If you have a disability and need a workplace accommodation or adjustment during the application and hiring process, including support for the interview or onboarding process, please visit https://amazon.jobs/content/en/how-we-hire/accommodations for more information. If the country/region you’re applying in isn’t listed, please contact your Recruiting Partner.\nCompany\n- ADCI - Karnataka\nJob ID: A10612367",
     "apply_url": "https://www.linkedin.com/jobs/view/4494136194",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "Tier-1 Tech"
     ]
   },
   {
-    "id": "lead_83",
+    "id": "b57bf5d5-9bcc-441c-a216-ffdbc6709dd5",
     "company_name": "Larsen & Toubro",
     "company_logo_url": "https://media.licdn.com/dms/image/v2/C4D0BAQFnEYpR8MlYsA/company-logo_100_100/company-logo_100_100/0/1631300737624?e=2147483647&v=beta&t=XwrPkxNIwc_l-G-D6Dfak1uo1oK-wEZfcwpUN3QD9WQ",
     "title": "Jr. Programmer / Developer",
@@ -1913,19 +2226,19 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "experience_min": 0,
     "experience_max": 1,
     "experience_label": "0-1 Years",
-    "stipend_or_salary": "Competitive Fresher CTC",
+    "stipend_or_salary": "Competitive Market Standard",
     "description": "Design, create and maintain applications using the .NET platform and environment.\nUnderstand requirements and transform them into functional applications in line with business objectives\nMaintain and upgrade existing applications and fix issues\nCollaborate with peers to design the best solution possible using the .Net framework and Microsoft tech stack\nRewriting/making changes in existing code structure to increase efficiency and performance\nEnsure error-free code that adheres to best coding practices\nTest, monitor, and make better solutions through incremental updates/new features/app optimization\nOffer technical support for web, mobile, and desktop applications\nIntegrate data storage systems and maintain code quality\nIdentify bottlenecks and address issues to ensure the best performance\nCreate architecture, specifications, and user interfaces of .Net applications\nInnovate and build high-quality software solutions leveraging the versatility of the .NET platform\nImplement best practices and methodologies for security, quality, and development approach",
     "apply_url": "https://www.linkedin.com/jobs/view/4491147111",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "Tier-1 Tech"
     ]
   },
   {
-    "id": "lead_84",
+    "id": "ac71063e-3102-4080-bb0a-8a0dcb71ba38",
     "company_name": "Ium Destination",
     "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-1FJvY5Rm8x1353713608jLftzwbEeZ.png",
     "title": "Website Developer",
@@ -1937,9 +2250,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Ium Destination** is actively hiring for **Website Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **South West Delhi, Delhi**.\n\n### Key Details\n- **Role:** Website Developer\n- **Company:** Ium Destination\n- **Location:** South West Delhi, Delhi\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/website-developer-ium-destination-1817483",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "Unstop",
@@ -1947,7 +2260,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_85",
+    "id": "fb1e165e-e8e9-42f2-9dc5-404681a1680f",
     "company_name": "Suntek.ai",
     "company_logo_url": "https://www.google.com/s2/favicons?domain=suntek.ai&sz=128",
     "title": "Shopify Developer",
@@ -1959,9 +2272,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Suntek.ai** is actively hiring for **Shopify Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **India (Pan-India)**.\n\n### Key Details\n- **Role:** Shopify Developer\n- **Company:** Suntek.ai\n- **Location:** India (Pan-India)\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/shopify-developer-suntekai-1819198",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "Unstop",
@@ -1970,7 +2283,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_86",
+    "id": "aaff7b7b-95e8-4e60-bbbf-9dd326a53dce",
     "company_name": "Rigbuzz",
     "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-eFL4H0YUu71178866161qiCWRLVTED.png",
     "title": "Web Developer",
@@ -1982,9 +2295,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Rigbuzz** is actively hiring for **Web Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **India (Pan-India)**.\n\n### Key Details\n- **Role:** Web Developer\n- **Company:** Rigbuzz\n- **Location:** India (Pan-India)\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/web-developer-rigbuzz-1815787",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "Unstop",
@@ -1992,7 +2305,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_87",
+    "id": "ec6d7c27-ee98-4842-895d-0f500acb8174",
     "company_name": "Airkrit India Pvt. Ltd.",
     "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-Re5nIxAUjJ826233303dIbN3dQfFF.png",
     "title": "Web Developer",
@@ -2004,9 +2317,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Airkrit India Pvt. Ltd.** is actively hiring for **Web Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Salem, Tamil Nadu**.\n\n### Key Details\n- **Role:** Web Developer\n- **Company:** Airkrit India Pvt. Ltd.\n- **Location:** Salem, Tamil Nadu\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/web-developer-airkrit-india-pvt-ltd-1810548",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "Unstop",
@@ -2014,7 +2327,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_88",
+    "id": "0224ecd9-acd3-4102-8c35-2c1156516d68",
     "company_name": "NITI Technologies India Software",
     "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-9nhRaTKmdi632010613DgjVh9ig8y.png",
     "title": "Software Development Engineer",
@@ -2026,9 +2339,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**NITI Technologies India Software** is actively hiring for **Software Development Engineer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Pune, Maharashtra / Mumbai, Maharashtra / Hyderabad, Telangana / Bangalore, Karnataka**.\n\n### Key Details\n- **Role:** Software Development Engineer\n- **Company:** NITI Technologies India Software\n- **Location:** Pune, Maharashtra / Mumbai, Maharashtra / Hyderabad, Telangana / Bangalore, Karnataka\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/software-development-engineer-niti-technologies-india-software-1735060",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "Unstop",
@@ -2036,7 +2349,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_89",
+    "id": "e547bff5-705a-4c26-925e-1b83eddf188c",
     "company_name": "Grab Family",
     "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/partners75/69a537e7815f3_Listing-Logo-1-GrabHack.jpg",
     "title": "Software Engineer - Backend",
@@ -2048,9 +2361,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Grab Family** is actively hiring for **Software Engineer - Backend** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Bangalore, Karnataka**.\n\n### Key Details\n- **Role:** Software Engineer - Backend\n- **Company:** Grab Family\n- **Location:** Bangalore, Karnataka\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/crp-software-engineer-backend-click-here-to-learn-more-about-grab-family-1676515",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "Unstop",
@@ -2058,7 +2371,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_90",
+    "id": "46d62a84-6818-4ae7-8fd9-df8990f2972b",
     "company_name": "Schotest",
     "company_logo_url": "https://www.google.com/s2/favicons?domain=schotest.com&sz=128",
     "title": "Software Engineer",
@@ -2070,9 +2383,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Schotest** is actively hiring for **Software Engineer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Gurgaon, Haryana**.\n\n### Key Details\n- **Role:** Software Engineer\n- **Company:** Schotest\n- **Location:** Gurgaon, Haryana\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/software-engineer-schotest-1794215",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "Unstop",
@@ -2080,7 +2393,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_91",
+    "id": "5b84b6da-a375-494a-ab85-8a869500adb3",
     "company_name": "BestQ Software Private Limited",
     "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-ZTUmyWf7YK1553791532GHQrvGzdOA.png",
     "title": "Software Development Engineer",
@@ -2092,9 +2405,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**BestQ Software Private Limited** is actively hiring for **Software Development Engineer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **India (Pan-India)**.\n\n### Key Details\n- **Role:** Software Development Engineer\n- **Company:** BestQ Software Private Limited\n- **Location:** India (Pan-India)\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/software-development-engineer-bestq-software-private-limited-1769896",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "Unstop",
@@ -2102,7 +2415,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_92",
+    "id": "871d7852-281d-41e4-81c3-516c2a5490e4",
     "company_name": "Lowe's Home Improvement",
     "company_logo_url": "https://d2q79iu7y748jz.cloudfront.net/s/_squarelogo/256x256/2ce023b53e8de023ea3cfc3e46a68902",
     "title": "Associate Software Engineer",
@@ -2111,18 +2424,18 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "experience_min": 0,
     "experience_max": 1,
     "experience_label": "0-1 Years",
-    "stipend_or_salary": "Competitive Fresher CTC",
+    "stipend_or_salary": "Competitive Market Standard",
     "description": "Outer Ring Road, Building Willow-L2 Manyata Embassy Business Park, SEZ, Location Bengaluru 1499 Category Technology Job Id JR-02702573 Job Type Full time\n\n  \n\nJOB DESCRIPTION\n\n**Innovate in Bengaluru**\n\nThis position is based at our on-site office in Bengaluru. Lowe's offers an ultramodern work environment, complete with cutting-edge technology, collaborative workspaces, an on-site gym and clinic, and other perks to enhance your work experience.\n\n  \n\n*Lowe's is an equal opportunity employer and administers all personnel practices without regard to race, color, religious creed, sex, gender, age, ancestry, national origin, mental or physical disability or medical condition, sexual orientation, gender identity or expression, marital status, military or veteran status, genetic information, or any other category protected under federal, state, or local law.*",
     "apply_url": "https://talent.lowes.com/in/en/job/JR-02702573",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026"
     ]
   },
   {
-    "id": "lead_93",
+    "id": "a6a909de-a324-47fc-91af-c0a1e600af6a",
     "company_name": "Desirous Global Consulting",
     "company_logo_url": "https://media.glassdoor.com/sql/4002600/desirous-global-consulting-squarelogo-1620393240235.png",
     "title": "Associate Software Engineer",
@@ -2134,9 +2447,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "₹0 - 0 LPA",
     "description": "Chennai, Tamil Nadu 0-2 Yrs ₹1.5 - ₹2.5 Yearly\n\n  \n\n**Job description**\n\nJob Title: Junior React.js DeveloperJob Location: Hinjewadi Phase 1, Pune, IndiaExperience: 0-1 YearsShift: Monday to Friday (10am-7pm)Qualification: BTech, BCA, MCA, BEPosition Overview: We are seeking a talented Junior React.js Developer to join our Product in-house team. In this role, you will be responsible for assisting in the development and implementation of our web applications using React.js. You will collaborate closely with our team of developers, designers, and product managers to deliver high-quality solutions that meet our business requirements.Key Responsibilities: Develop user-facing features using React.js Build reusable components and front-end libraries for future use Translate designs and wireframes into high-quality code Optimize components for maximum performance across a vast array of web-capable devices and browsers Work closely with designers to ensure the UI/UX designs are implemented correctly Implement unit tests and functional tests to ensure code robustness and reliability Collaborate with backend developers to integrate APIs and improve overall system architecture Stay up-to-date with emerging technologies and industry trendsRequirements: Bachelor s degree in Computer Science, Engineering, or a related field (or equivalent work experience) 0-1 years of professional experience as a React.js Developer Strong proficiency in JavaScript, HTML5, and CSS3 Experience with Redux and Redux Saga for state management in React applications Familiarity with RESTful APIs and modern authorization mechanisms Solid understanding of responsive design principles and ability to implement them Good understanding of Git version control system Excellent problem-solving skills and attention to detail Ability to work effectively in a fast-paced environment and meet deadlinesPreferred Skills: Knowledge of additional front-end frameworks/libraries such as AngularJS, Vue.js, etc. Familiarity with Agile/Scrum development methodologies Experience with testing frameworks such as Jest, Enzyme, etc.Benefits: Competitive salary Professional development opportunities Collaborative team environment",
     "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1009771893602",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "JavaScript",
@@ -2146,7 +2459,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_94",
+    "id": "2e96c2fd-176a-42ed-91b2-f68e9778f917",
     "company_name": "Lowe's",
     "company_logo_url": "https://media.glassdoor.com/sql/415/lowe-s-home-improvement-squareLogo-1677875740566.png",
     "title": "Associate Software Engineer",
@@ -2158,15 +2471,15 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "₹3.6 - 10 LPA",
     "description": "Outer Ring Road, Building Willow-L2 Manyata Embassy Business Park, SEZ, Location Bengaluru 1499 Category Technology Job Id JR-02702573 Job Type Full time\n\n  \n\nJOB DESCRIPTION\n\n**Innovate in Bengaluru**\n\nThis position is based at our on-site office in Bengaluru. Lowe's offers an ultramodern work environment, complete with cutting-edge technology, collaborative workspaces, an on-site gym and clinic, and other perks to enhance your work experience.\n\n  \n\n*Lowe's is an equal opportunity employer and administers all personnel practices without regard to race, color, religious creed, sex, gender, age, ancestry, national origin, mental or physical disability or medical condition, sexual orientation, gender identity or expression, marital status, military or veteran status, genetic information, or any other category protected under federal, state, or local law.*",
     "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010334086104",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026"
     ]
   },
   {
-    "id": "lead_95",
+    "id": "6286042b-7921-45d6-9091-e38655eaa6d0",
     "company_name": "Wikasta Business and Technical Solutions Pvt. Ltd.",
     "company_logo_url": null,
     "title": "Software Development Engineer (Remote)",
@@ -2178,9 +2491,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Wikasta Business and Technical Solutions Pvt. Ltd.** is actively hiring for **Software Development Engineer (Remote)** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **India (Pan-India)**.\n\n### Key Details\n- **Role:** Software Development Engineer (Remote)\n- **Company:** Wikasta Business and Technical Solutions Pvt. Ltd.\n- **Location:** India (Pan-India)\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/software-development-engineer-remote-wikasta-business-and-technical-solutions-pvt-ltd-1803076",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "Unstop",
@@ -2188,7 +2501,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_96",
+    "id": "e7f3491a-5fce-44b6-80be-98a38d331d52",
     "company_name": "Trignodev Software Pvt Ltd",
     "company_logo_url": null,
     "title": "System Administrator / Engineer",
@@ -2200,9 +2513,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Trignodev Software Pvt Ltd** is actively hiring for **System Administrator / Engineer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Bangalore, Karnataka**.\n\n### Key Details\n- **Role:** System Administrator / Engineer\n- **Company:** Trignodev Software Pvt Ltd\n- **Location:** Bangalore, Karnataka\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/system-administrator-trignodev-software-pvt-ltd-1806423",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "Unstop",
@@ -2210,7 +2523,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_97",
+    "id": "a84feacd-bfeb-45ea-9633-5703c630198c",
     "company_name": "Cosette Network Private Limited",
     "company_logo_url": "https://www.google.com/s2/favicons?domain=cosettenetwork.com&sz=128",
     "title": "Software Engineer",
@@ -2222,9 +2535,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Cosette Network Private Limited** is actively hiring for **Software Engineer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Bangalore, Karnataka**.\n\n### Key Details\n- **Role:** Software Engineer\n- **Company:** Cosette Network Private Limited\n- **Location:** Bangalore, Karnataka\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/software-engineer-cosette-network-private-limited-1817667",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "Unstop",
@@ -2232,7 +2545,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_98",
+    "id": "2e51068d-fc54-4239-b992-ea7c2dda78e4",
     "company_name": "Ecugie Technologies",
     "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-5IWCShntrt1997687887gCUNn19JHL.png",
     "title": "Software Engineer - Full Stack",
@@ -2244,9 +2557,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Ecugie Technologies** is actively hiring for **Software Engineer - Full Stack** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Gurgaon, Haryana**.\n\n### Key Details\n- **Role:** Software Engineer - Full Stack\n- **Company:** Ecugie Technologies\n- **Location:** Gurgaon, Haryana\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/software-engineer-full-stack-ecugie-technologies-1819468",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "Unstop",
@@ -2254,11 +2567,11 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_99",
+    "id": "f1e7036b-3b3f-4960-aae6-83b0eded3a2a",
     "company_name": "Incubyte",
     "company_logo_url": "https://www.google.com/s2/favicons?domain=incubyte.co&sz=128",
     "title": "Software Craftsperson Internship",
-    "type": "INTERNSHIP",
+    "type": "JOB",
     "location": "Ahmedabad, Gujarat",
     "experience_min": 0,
     "experience_max": 1,
@@ -2266,9 +2579,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Incubyte** is actively hiring for **Software Craftsperson Internship** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Ahmedabad, Gujarat**.\n\n### Key Details\n- **Role:** Software Craftsperson Internship\n- **Company:** Incubyte\n- **Location:** Ahmedabad, Gujarat\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/software-craftsperson-internship-incubyte-1826189",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "Unstop",
@@ -2276,7 +2589,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_100",
+    "id": "2bd40707-d188-4dee-b6f6-ffdb306f1bc1",
     "company_name": "Airkrit India Pvt. Ltd.",
     "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-Re5nIxAUjJ826233303dIbN3dQfFF.png",
     "title": "Software Engineer",
@@ -2288,9 +2601,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Airkrit India Pvt. Ltd.** is actively hiring for **Software Engineer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Bangalore, Karnataka**.\n\n### Key Details\n- **Role:** Software Engineer\n- **Company:** Airkrit India Pvt. Ltd.\n- **Location:** Bangalore, Karnataka\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/software-engineer-airkrit-india-pvt-ltd-1810534",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "Unstop",
@@ -2298,7 +2611,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_101",
+    "id": "dc17c216-a891-406e-aaa1-392e96fb49fa",
     "company_name": "Mind Masters AI Solutions",
     "company_logo_url": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-6UYdrTNpxd829543178dXZcGycTnL.png",
     "title": "Software Developer",
@@ -2310,9 +2623,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Mind Masters AI Solutions** is actively hiring for **Software Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **India (Pan-India)**.\n\n### Key Details\n- **Role:** Software Developer\n- **Company:** Mind Masters AI Solutions\n- **Location:** India (Pan-India)\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/software-developer-mind-masters-ai-solutions-1808445",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "Unstop",
@@ -2321,7 +2634,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_102",
+    "id": "a85bf67f-5dbe-4d75-b3af-6e2f8bcc8a8e",
     "company_name": "Finkuby Technologies",
     "company_logo_url": "https://www.google.com/s2/favicons?domain=finkuby.com&sz=128",
     "title": "Software Engineer",
@@ -2333,9 +2646,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "Competitive / Market standard",
     "description": "### About the Opportunity (via Unstop)\n**Finkuby Technologies** is actively hiring for **Software Engineer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Hyderabad, Telangana**.\n\n### Key Details\n- **Role:** Software Engineer\n- **Company:** Finkuby Technologies\n- **Location:** Hyderabad, Telangana\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
     "apply_url": "https://unstop.com/jobs/software-engineer-finkuby-technologies-1806987",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "Unstop",
@@ -2343,7 +2656,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_103",
+    "id": "21329cdd-4629-4552-baf4-096877fe3adc",
     "company_name": "Altius Technologies- ANTLAB a software Division",
     "company_logo_url": "https://www.google.com/s2/favicons?domain=altiustechnologies.com&sz=128",
     "title": "Trainee – Product Data Engineer for B.E., Diploma and ITI candidates",
@@ -2355,16 +2668,16 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "₹10,000 - 25,000 / month",
     "description": "**Trainee – Product Data Engineer**\n\n**Company:** AltiusNXT Technologies  \n**Department:** Product Data Engineering / Data Operations  \n**Employment Type:** Full-Time  \n**Experience:** Freshers – 0 to 1 Year  \n**Work Location:** Coimbatore, Tamil Nadu\n\nAbout AltiusNXT\n\nAltiusNXT is a technology-driven company specialising in industrial product data enrichment, e-commerce solutions and AI-powered product information management.\n\nWe help global manufacturers, distributors and B2B e-commerce businesses transform complex and unstructured product information into accurate, standardised and enriched digital product data.\n\nOur product data engineering team works with technical product specifications, manufacturer catalogues, datasheets, images and AI-powered tools to improve product discoverability, accuracy and digital commerce experiences.\n\nRole Overview\n\nWe are looking for enthusiastic and technically inclined freshers to join our team as **Trainee – Product Data Engineers**.\n\nThis opportunity is open to candidates from Electrical, Electronics, Instrumentation, Mechanical, Automobile and other relevant engineering backgrounds, including Diploma and ITI qualifications.\n\nThe selected candidates will be trained to understand various industrial and engineering products, analyse their technical specifications, extract information from manufacturer datasheets and catalogues, and convert the information into structured and standardised product data.\n\nCandidates will gain practical exposure to industrial product categories, technical documentation, product data enrichment, AI-powered tools and B2B e-commerce platforms.\n\nKey Responsibilities\n\n* Understand different industrial, electrical, electronic, mechanical and automotive products and their applications.\n* Read and interpret technical datasheets, product catalogues, manuals, drawings and manufacturer websites.\n* Identify and extract product specifications, technical attributes, model numbers, part numbers and other relevant product information.\n* Enter, organise and maintain accurate product information using Excel and internal product data management tools.\n* Classify products into appropriate categories and subcategories based on their technical characteristics.\n* Standardise product attributes, technical values, units of measurement and product descriptions.\n* Verify product information against manufacturer datasheets and official product sources to ensure accuracy.\n* Identify missing, inconsistent or incorrect product specifications and report discrepancies to the respective team.\n* Work with AI-powered product data enrichment tools to improve product information quality and completeness.\n* Coordinate with team members to meet assigned productivity, accuracy and quality targets.\n\nEducational Qualifications\n\nCandidates from the following educational backgrounds are eligible:\n\n**B.E. / B.Tech Graduates:**\n\n* Electrical and Electronics Engineering (EEE)\n* Electronics and Communication Engineering (ECE)\n* Electronics and Instrumentation Engineering (EIE)\n* Mechanical Engineering\n* Automobile Engineering\n\n**Diploma Holders:**\n\n* Diploma in Electrical and Electronics Engineering\n* Diploma in Electronics and Communication Engineering\n* Diploma in Mechanical Engineering\n* Diploma in Automobile Engineering\n* Other relevant technical diploma disciplines.\n\n**ITI Candidates:**\n\n* ITI Electrician\n* ITI Fitter\n* ITI Mechanic (Motor Vehicle)\n* ITI Electronics Mechanic\n* ITI Instrument Mechanic\n* Other relevant technical trades.\n\n**Eligibility:** Freshers and candidates with up to one year of relevant experience are welcome to apply.\n\nRequired Skills\n\n* Basic understanding of engineering concepts and technical products.\n* Ability to read and understand technical specifications and product documentation.\n* Basic computer knowledge and familiarity with MS Excel.\n* Good analytical skills and attention to detail.\n* Basic English reading and comprehension skills to understand technical datasheets.\n* Willingness to learn new technologies, software applications and AI-powered tools.\n* Good communication skills and ability to work in a team.\n* Positive attitude, discipline and commitment to quality.\n\nPreferred Skills (Additional Advantage)\n\n* Basic knowledge of electrical, electronic, mechanical or automotive components.\n* Familiarity with industrial products, tools, equipment and machinery.\n* Knowledge of MS Excel, PDF documentation and internet research.\n* Understanding of technical drawings, product manuals and datasheets.\n* Basic knowledge of e-commerce product catalogues or product data management.\n\n*Candidates without prior experience in product data engineering will also be considered. Comprehensive on-the-job training will be provided.*\n\nWhat We Offer\n\n* Structured training in industrial product data engineering.\n* Exposure to international industrial product catalogues and technical documentation.\n* Hands-on experience with AI-powered product data enrichment tools.\n* Opportunity to work with global B2B e-commerce product information.\n* Continuous learning and career development opportunities.\n* A platform to build a career at the intersection of engineering, technology and digital commerce.\n\n**Career Growth Opportunity**\n\nSuccessful trainees will have opportunities to develop their careers in:\n\n* Product Data Engineering\n* Technical Product Data Analysis\n* Industrial Product Classification and Taxonomy\n* Product Data Quality and Verification\n* AI-Powered Product Data Enrichment\n\n**Interested candidates can share their updated resumes with the HR team - 7708182828**\n\nPay: ₹10,000.00 - ₹25,000.00 per month\n\nBenefits:\n\n* Health insurance\n* Life insurance\n* Provident Fund\n\nApplication Question(s):\n\n* Are you from Coimbatore?\n\nWork Location: In person",
     "apply_url": "https://in.indeed.com/viewjob?jk=cd622b7a1f00337c",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "AI"
     ]
   },
   {
-    "id": "lead_104",
+    "id": "7d6abd24-4caf-44ef-a822-f385b8ff9bc3",
     "company_name": "Weavers Web Academy",
     "company_logo_url": null,
     "title": "QA Engineer",
@@ -2376,9 +2689,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "₹30,000 - 40,000 / month",
     "description": "**Hiring: Quality Assurance Engineer – Automation Testing**\n\n**Company:** Weavers Web Solutions Pvt. Ltd.\n\n**Location:** Kolkata, West Bengal  \n**Experience:** 3- 5 years  \n**Number of Vacancies:** 1  \n**Employment Type:** Full-time | Permanent  \n**Work Mode:** On-site (Work from Office)\n\n**Eligibility:** Applications are invited from local candidates based in Kolkata and nearby areas of West Bengal only. Freshers do not apply and candidate outside Bengal do not apply.\n\n**Job Description**\n\nWeavers Web is looking for skilled and detail-oriented **Quality Assurance Engineers – Automation Testing** to join our growing team. The ideal candidates should have hands-on experience in automation testing, strong debugging skills, and a passion for delivering high-quality software products.\n\n**Key Responsibilities**\n\n* Develop, execute, and maintain automated test scripts for web and mobile applications.\n* Design and execute test cases to identify, track, and document software defects.\n* Perform functional, regression, and automation testing.\n* Collaborate with developers and product teams to ensure software quality.\n* Prepare detailed test reports and maintain testing documentation.\n* Ensure timely delivery of quality-assured software products.\n* Stay updated with the latest automation tools, technologies, and testing practices.\n\n**Required Skills & Qualifications**\n\n* Strong knowledge of automation testing tools such as **Selenium, Cypress, or Appium**.\n* Hands-on experience with **Java, Python, or JavaScript**.\n* Experience with testing frameworks such as **TestNG or JUnit**.\n* Good understanding of SDLC, STLC, and Agile methodologies.\n* Strong debugging, analytical, and problem-solving skills.\n* Excellent attention to detail and a quality-driven mindset.\n\n**Desired Competencies**\n\n* Strong teamwork and communication skills.\n* Ability to work independently and manage priorities.\n* Proactive approach towards identifying and resolving issues.\n* Commitment to maintaining high-quality standards.\n\n**Benefits**\n\n* **Provident Fund (PF)**\n* **Full-time, permanent employment**\n\n**Important: This is an on-site opportunity. Candidates must be willing to work from our Kolkata office. Applications from local candidates only.**\n\nPay: ₹30,000.00 - ₹40,000.00 per month\n\nWork Location: In person",
     "apply_url": "https://in.indeed.com/viewjob?jk=0558e0b850234463",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "Python",
@@ -2387,7 +2700,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_105",
+    "id": "f6b9c997-758d-434b-9cf1-f38a6ddc6b5e",
     "company_name": "Flux Auto",
     "company_logo_url": "https://www.google.com/s2/favicons?domain=fluxauto.co&sz=128",
     "title": "Robotics Testing Engineer",
@@ -2399,9 +2712,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "₹2 - 4 LPA",
     "description": "**PLEASE APPLY ONLY IF YOU ARE AN IMMEDIATE JOINER**\n\n**About us:**\n\nFlux Auto builds autonomous vehicle technology for commercial and industrial applications. Flux Auto was founded in 2017 with the goal of democratizing autonomous vehicle technology and bringing its benefits to vehicles - new and old - around the world. We develop the various hardware and software technologies to make vehicles move and operate autonomously. Everyday our engineers are working to solve new and unique challenges for our clients in India, and North America. We are a multidisciplinary team solving some of the most challenging problems in autonomous technology and robotics. Join us in our journey to democratize autonomous mobility!\n\n**Job Summary:**\n\nWe are looking for a highly motivated Robotics Testing Operations Engineer to join our Robotics R&D team. The ideal candidate should have a strong background in ROS 1 & ROS 2, C++, Python, and Embedded Systems, with a solid understanding of robot controllers, system architecture, and hardware/software debugging. You will work closely with our Embedded Hardware and Product Design teams to validate and verify robotic systems, ensuring robust performance across all modules. The individual should also be willing to travel to new locations for system deployments and on-site testing.\n\n**Responsibilities:**\n\n* Collaborate with Embedded and Mechanical teams to validate robotic systems and sub-systems.\n* Conduct **hardware and software debugging** of embedded and robotic systems.\n* Design and execute comprehensive test cases for controllers, sensors, actuators, and overall system flow.\n* Analyze system behavior and assist in identifying bottlenecks or failures.\n* Document results and create detailed **test reports** and feedback loops for design improvement.\n* Develop automation scripts and tools for testing using **Python** and **C++**.\n* Be ready to travel to new locations for system deployments, field testing, and on-site validation.\n\n**Key Skills:**\n\n* Strong proficiency in **ROS 1 & 2**\n* Advanced programming skills in **C++, Python**, and **Embedded C**.\n* Good understanding of **controllers (PID, feedforward, etc.)** and low-level firmware.\n* Familiarity with **robot system architecture** including sensors, actuators, and control loops.\n* Expertise in **hardware debugging** and using tools like oscilloscopes, logic analyzers, etc.\n\n**Preferred Experience & Qualifications:**\n\n* Hands-on experience with **Arduino or other microcontroller-based platforms**.\n* Strong understanding of **embedded system flow** and **real-time constraints**.\n* Knowledge of **sensor integration, actuator control**, and data communication protocols (I2C, SPI, UART).\n* Exposure to **Robot development workflows** using ROS.\n* Ability to read circuit schematics and debug embedded hardware issues.\n\n**PLEASE APPLY ONLY IF YOU ARE AN IMMEDIATE JOINER**\n\nJob Type: Full-time\n\nPay: ₹200,000.00 - ₹400,000.00 per year\n\nJob Types: Full-time, Permanent, Fresher\n\n**Ability to commute/relocate:**\n\n* Jalahalli, Bengaluru - 560013, Karnataka: Reliably commute or planning to relocate before starting work (Required)\n* This is a full time office role\n\nJob Types: Full-time, Permanent, Fresher\n\nPay: ₹200,000.00 - ₹400,000.00 per year\n\nBenefits:\n\n* Flexible schedule\n* Paid time off\n* Provident Fund\n* Work from home\n\nAbility to commute/relocate:\n\n* Jalahalli, Bengaluru, Karnataka: Reliably commute or planning to relocate before starting work (Required)\n\nApplication Question(s):\n\n* Current CTC?\n* Expected CTC?\n\nWork Location: In person",
     "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010332726896",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "Python",
@@ -2410,7 +2723,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_106",
+    "id": "f222c6ac-a070-40d7-944d-ce6e2b7a6df2",
     "company_name": "ALTIUSNXT Technologies",
     "company_logo_url": "https://www.google.com/s2/favicons?domain=altiusnxt.com&sz=128",
     "title": "Trainee – Product Data Engineer for B.E., Diploma and ITI candidates",
@@ -2422,16 +2735,16 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "₹10,000 - 25,000 / month",
     "description": "**Trainee – Product Data Engineer**\n\n**Company:** AltiusNXT Technologies  \n**Department:** Product Data Engineering / Data Operations  \n**Employment Type:** Full-Time  \n**Experience:** Freshers – 0 to 1 Year  \n**Work Location:** Coimbatore, Tamil Nadu\n\nAbout AltiusNXT\n\nAltiusNXT is a technology-driven company specialising in industrial product data enrichment, e-commerce solutions and AI-powered product information management.\n\nWe help global manufacturers, distributors and B2B e-commerce businesses transform complex and unstructured product information into accurate, standardised and enriched digital product data.\n\nOur product data engineering team works with technical product specifications, manufacturer catalogues, datasheets, images and AI-powered tools to improve product discoverability, accuracy and digital commerce experiences.\n\nRole Overview\n\nWe are looking for enthusiastic and technically inclined freshers to join our team as **Trainee – Product Data Engineers**.\n\nThis opportunity is open to candidates from Electrical, Electronics, Instrumentation, Mechanical, Automobile and other relevant engineering backgrounds, including Diploma and ITI qualifications.\n\nThe selected candidates will be trained to understand various industrial and engineering products, analyse their technical specifications, extract information from manufacturer datasheets and catalogues, and convert the information into structured and standardised product data.\n\nCandidates will gain practical exposure to industrial product categories, technical documentation, product data enrichment, AI-powered tools and B2B e-commerce platforms.\n\nKey Responsibilities\n\n* Understand different industrial, electrical, electronic, mechanical and automotive products and their applications.\n* Read and interpret technical datasheets, product catalogues, manuals, drawings and manufacturer websites.\n* Identify and extract product specifications, technical attributes, model numbers, part numbers and other relevant product information.\n* Enter, organise and maintain accurate product information using Excel and internal product data management tools.\n* Classify products into appropriate categories and subcategories based on their technical characteristics.\n* Standardise product attributes, technical values, units of measurement and product descriptions.\n* Verify product information against manufacturer datasheets and official product sources to ensure accuracy.\n* Identify missing, inconsistent or incorrect product specifications and report discrepancies to the respective team.\n* Work with AI-powered product data enrichment tools to improve product information quality and completeness.\n* Coordinate with team members to meet assigned productivity, accuracy and quality targets.\n\nEducational Qualifications\n\nCandidates from the following educational backgrounds are eligible:\n\n**B.E. / B.Tech Graduates:**\n\n* Electrical and Electronics Engineering (EEE)\n* Electronics and Communication Engineering (ECE)\n* Electronics and Instrumentation Engineering (EIE)\n* Mechanical Engineering\n* Automobile Engineering\n\n**Diploma Holders:**\n\n* Diploma in Electrical and Electronics Engineering\n* Diploma in Electronics and Communication Engineering\n* Diploma in Mechanical Engineering\n* Diploma in Automobile Engineering\n* Other relevant technical diploma disciplines.\n\n**ITI Candidates:**\n\n* ITI Electrician\n* ITI Fitter\n* ITI Mechanic (Motor Vehicle)\n* ITI Electronics Mechanic\n* ITI Instrument Mechanic\n* Other relevant technical trades.\n\n**Eligibility:** Freshers and candidates with up to one year of relevant experience are welcome to apply.\n\nRequired Skills\n\n* Basic understanding of engineering concepts and technical products.\n* Ability to read and understand technical specifications and product documentation.\n* Basic computer knowledge and familiarity with MS Excel.\n* Good analytical skills and attention to detail.\n* Basic English reading and comprehension skills to understand technical datasheets.\n* Willingness to learn new technologies, software applications and AI-powered tools.\n* Good communication skills and ability to work in a team.\n* Positive attitude, discipline and commitment to quality.\n\nPreferred Skills (Additional Advantage)\n\n* Basic knowledge of electrical, electronic, mechanical or automotive components.\n* Familiarity with industrial products, tools, equipment and machinery.\n* Knowledge of MS Excel, PDF documentation and internet research.\n* Understanding of technical drawings, product manuals and datasheets.\n* Basic knowledge of e-commerce product catalogues or product data management.\n\n*Candidates without prior experience in product data engineering will also be considered. Comprehensive on-the-job training will be provided.*\n\nWhat We Offer\n\n* Structured training in industrial product data engineering.\n* Exposure to international industrial product catalogues and technical documentation.\n* Hands-on experience with AI-powered product data enrichment tools.\n* Opportunity to work with global B2B e-commerce product information.\n* Continuous learning and career development opportunities.\n* A platform to build a career at the intersection of engineering, technology and digital commerce.\n\n**Career Growth Opportunity**\n\nSuccessful trainees will have opportunities to develop their careers in:\n\n* Product Data Engineering\n* Technical Product Data Analysis\n* Industrial Product Classification and Taxonomy\n* Product Data Quality and Verification\n* AI-Powered Product Data Enrichment\n\n**Interested candidates can share their updated resumes with the HR team - 7708182828**\n\nPay: ₹10,000.00 - ₹25,000.00 per month\n\nBenefits:\n\n* Health insurance\n* Life insurance\n* Provident Fund\n\nApplication Question(s):\n\n* Are you from Coimbatore?\n\nWork Location: In person",
     "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010333279768",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "AI"
     ]
   },
   {
-    "id": "lead_107",
+    "id": "1d8662ed-a935-4936-a029-3ecd39bcbdee",
     "company_name": "Khodape Software",
     "company_logo_url": "https://www.google.com/s2/favicons?domain=khodapesoftware.com&sz=128",
     "title": "DevOps Engineer - Fresher",
@@ -2443,9 +2756,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "₹12,000 - 15,000 / month",
     "description": "We are looking for a motivated and enthusiastic junior devOps engineer to join our technical team. The candidate will work with developers to manage application deployments, server environments, cloud infrastructure, and basic automation processes.\n\n**Key Responsibilities :**\n\n* Assist in managing Linux-based servers and environments.\n* Support application deployment on AWS and cloud servers.\n* Learn and implement CI/CD pipelines.\n* Work with Git and GitHub for source code management.\n* Assist in configuring web servers such as Apache and Nginx.\n* Work with Docker for application containerization\n* Assist in database backup and server maintenance.\n* Troubleshoot basic deployment and server-related issues.\n* Follow security best practices for server and application management.\n\n**Good to Have**\n\n* Knowledge of AWS CodePipeline, CodeBuild, or CodeDeploy.\n* Basic understanding of CI/CD.\n* Knowledge of MySQL database backups.\n* Familiarity with monitoring tools.\n* Interest in DevSecOps and infrastructure automation.\n\nPay: ₹12,000.00 - ₹15,000.00 per month\n\nWork Location: In person",
     "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010333159638",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "MySQL",
@@ -2457,7 +2770,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_108",
+    "id": "006f8d1f-858f-45c6-b1ba-10a9792cdca3",
     "company_name": "Upsurge",
     "company_logo_url": "https://www.google.com/s2/favicons?domain=upsurge.co&sz=128",
     "title": "Software Engineer - QA & Development (fresher)",
@@ -2469,9 +2782,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "₹25,000 - 25,000 / month",
     "description": "Key Responsibilities – Development Develop and maintain web applications using React.js and Node.js. Write clean, maintainable, and reusable code. Work with REST APIs and integrate frontend and backend components. Debug and resolve application issues. Understand existing code and contribute to feature development. Key Responsibilities – QA & Testing Perform functional, regression, integration, and basic UI testing. Create and execute test cases based on requirements. Identify, reproduce, and document bugs with proper details. Perform basic API testing and validate application responses. Work with developers to troubleshoot and verify reported issues. Participate in release validation and regression testing. Required Skills Strong fundamentals of JavaScript. Basic to good understanding of React.js. Basic to good understanding of Node.js. Understanding of HTML, CSS, and REST APIs. Basic knowledge of database concepts. Understanding of software testing fundamentals. Good debugging and problem-solving skills. Basic understanding of Git/version control. Good communication and willingness to learn. Good to Have Knowledge of MongoDB or other NoSQL databases.Basic knowledge of API testing tools such as Postman. Understanding of Jest or other testing frameworks. Basic knowledge of browser developer tools. Any academic or personal project using React.js/Node.js. What We Are Looking For Strong programming fundamentals rather than only theoretical knowledge. Good logical and analytical thinking. Ability to understand requirements and identify edge cases. Willingness to work across both Development and QA responsibilities. Ability to learn new technologies and adapt to project requirements.\n\nPay: Up to ₹25,000.00 per month\n\nBenefits:\n\n* Food provided\n* Health insurance\n* Provident Fund\n\nWork Location: In person",
     "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010333192870",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "JavaScript",
@@ -2483,7 +2796,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_109",
+    "id": "98580f8e-f79e-4909-bf78-65b3645ffdea",
     "company_name": "iFlair Web Technologies Pvt Ltd",
     "company_logo_url": null,
     "title": "Embedded Systems Engineer _Paldi, Ahmedabad",
@@ -2495,16 +2808,16 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "₹11,000 - 20,000 / month",
     "description": "**Job Description – Embedded Systems Engineer**\n\n**Company:** iFlair Web Technologies Pvt. Ltd.  \n**Position:** Embedded Systems Engineer – Trainee  \n**Experience:** Fresher to 6 months (maximum 1 year)  \n**Employment Type:** Full-time  \n**Location:** Ahmedabad\n\n**About the Role**\n\nWe are looking for an enthusiastic Embedded Systems Engineer who is interested in working with microcontrollers, embedded programming, electronics, and hardware-software integration.\n\nThe candidate will work with the technical team to understand, develop, test, and debug embedded systems and firmware solutions.\n\n**Key Responsibilities**\n\n* Develop and test embedded programs using C/C++.\n* Work with microcontrollers such as **ESP32, Arduino, STM32 or Raspberry Pi .**\n* Understand and interface basic electronic components, sensors, and actuators.\n* Work with GPIO pins, digital and analog input/output.\n* Develop basic firmware for microcontroller-based applications.\n* Understand communication protocols such as UART, SPI, and I2C.\n* Perform hardware-software integration and debugging.\n* Work on practical embedded and **IoT-based projects.**\n* Research new technologies and contribute to technical solutions.\n\n**Required Skills**\n\n* Basic knowledge of C programming.\n* Understanding of basic electronics and electrical components.\n* Knowledge of microcontrollers and embedded systems fundamentals.\n* Understanding of digital and analog signals.\n* Basic knowledge of sensors, LEDs, switches, and other electronic components.\n* Logical thinking and problem-solving skills.\n* Willingness to learn and work on practical hardware-based projects.\n\nPay: ₹11,000.00 - ₹20,000.00 per month\n\nBenefits:\n\n* Flexible schedule\n* Paid time off\n\nWork Location: In person",
     "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010334115656",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "Embedded Systems"
     ]
   },
   {
-    "id": "lead_110",
+    "id": "b89ce0cb-fe2f-4b9b-b312-a0a2fa327e61",
     "company_name": "Weavers Web Solutions Pvt. Ltd",
     "company_logo_url": "https://www.google.com/s2/favicons?domain=weavers-web.com&sz=128",
     "title": "QA Engineer",
@@ -2516,9 +2829,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "₹30,000 - 40,000 / month",
     "description": "**Hiring: Quality Assurance Engineer – Automation Testing**\n\n**Company:** Weavers Web Solutions Pvt. Ltd.\n\n**Location:** Kolkata, West Bengal  \n**Experience:** 3- 5 years  \n**Number of Vacancies:** 1  \n**Employment Type:** Full-time | Permanent  \n**Work Mode:** On-site (Work from Office)\n\n**Eligibility:** Applications are invited from local candidates based in Kolkata and nearby areas of West Bengal only. Freshers do not apply and candidate outside Bengal do not apply.\n\n**Job Description**\n\nWeavers Web is looking for skilled and detail-oriented **Quality Assurance Engineers – Automation Testing** to join our growing team. The ideal candidates should have hands-on experience in automation testing, strong debugging skills, and a passion for delivering high-quality software products.\n\n**Key Responsibilities**\n\n* Develop, execute, and maintain automated test scripts for web and mobile applications.\n* Design and execute test cases to identify, track, and document software defects.\n* Perform functional, regression, and automation testing.\n* Collaborate with developers and product teams to ensure software quality.\n* Prepare detailed test reports and maintain testing documentation.\n* Ensure timely delivery of quality-assured software products.\n* Stay updated with the latest automation tools, technologies, and testing practices.\n\n**Required Skills & Qualifications**\n\n* Strong knowledge of automation testing tools such as **Selenium, Cypress, or Appium**.\n* Hands-on experience with **Java, Python, or JavaScript**.\n* Experience with testing frameworks such as **TestNG or JUnit**.\n* Good understanding of SDLC, STLC, and Agile methodologies.\n* Strong debugging, analytical, and problem-solving skills.\n* Excellent attention to detail and a quality-driven mindset.\n\n**Desired Competencies**\n\n* Strong teamwork and communication skills.\n* Ability to work independently and manage priorities.\n* Proactive approach towards identifying and resolving issues.\n* Commitment to maintaining high-quality standards.\n\n**Benefits**\n\n* **Provident Fund (PF)**\n* **Full-time, permanent employment**\n\n**Important: This is an on-site opportunity. Candidates must be willing to work from our Kolkata office. Applications from local candidates only.**\n\nPay: ₹30,000.00 - ₹40,000.00 per month\n\nWork Location: In person",
     "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010333949903",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "Python",
@@ -2527,7 +2840,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_111",
+    "id": "e130434f-0c33-4d5e-8c15-9f615e9ed494",
     "company_name": "Kaynex Technologies",
     "company_logo_url": "https://www.google.com/s2/favicons?domain=kaynex.com&sz=128",
     "title": "DevOps Engineer",
@@ -2539,9 +2852,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "₹5,000 - 5,000 / month",
     "description": "**Position:** DevOps Engineer  \n**Experience:** 0–1 Year  \n**Employment Type:** Full-Time  \n**Location:** Ahmedabad, Gujarat  \n**Work Mode:** Work From Office (WFO)\n\n**About the Role**\n\nKaynex Technologies is looking for a motivated and enthusiastic **DevOps Engineer** to join our growing technology team. This opportunity is ideal for freshers and candidates with 0–1 year of experience who are eager to build their careers in DevOps, cloud technologies, automation, and infrastructure management.\n\nAs a DevOps Engineer, you will work closely with developers, QA engineers, and senior DevOps professionals to streamline software delivery, automate deployment processes, and maintain reliable development and production environments.\n\nKey Responsibilities\n\n* Assist in building, configuring, and maintaining CI/CD pipelines for application deployment.\n* Support application deployment, release management, and version control processes.\n* Monitor application performance, servers, and infrastructure to ensure smooth operations.\n* Configure, manage, and maintain Linux-based servers.\n* Work with Docker containers and containerized applications.\n* Collaborate with development and QA teams to automate deployment workflows.\n* Monitor system logs and troubleshoot infrastructure and application-related issues.\n* Assist in managing cloud infrastructure using AWS, Azure, or Google Cloud.\n* Implement basic security measures, backup procedures, and system maintenance practices.\n* Prepare and maintain deployment documentation and operational procedures.\n* Continuously learn and stay updated with the latest DevOps tools, technologies, and industry best practices.\n\nRequired Skills\n\n* 0–1 year of experience or internship in DevOps.\n* Good understanding of Linux/Unix operating systems.\n* Basic knowledge of CI/CD pipelines and tools such as Jenkins, GitHub Actions, or GitLab CI.\n* Familiarity with Docker and containerization concepts.\n* Knowledge of Git and version control systems.\n* Basic understanding of cloud platforms such as AWS, Microsoft Azure, or Google Cloud Platform (GCP).\n* Basic knowledge of Shell Scripting or Bash.\n* Familiarity with monitoring and logging concepts and tools.\n* Strong analytical, problem-solving, and troubleshooting skills.\n* Good communication skills and the ability to work collaboratively in a team.\n\nPreferred Skills\n\n* Basic knowledge of Kubernetes and container orchestration.\n* Familiarity with Nginx or Apache web servers.\n* Understanding of Terraform or Infrastructure as Code (IaC).\n* Basic knowledge of Ansible or other configuration management tools.\n* Familiarity with monitoring tools such as Grafana, Prometheus, or ELK Stack.\n* Understanding of networking fundamentals, including DNS, HTTP/HTTPS, firewalls, and IP addressing.\n\nEducational Qualifications\n\n* Bachelor's or Master's degree in Computer Science, Information Technology, Computer Engineering, or a related field.\n* Eligible qualifications include BCA, MCA, B.Sc. (IT/Computer Science), B.E., or B.Tech (IT/Computer Science).\n* Candidates with relevant DevOps certifications, cloud certifications, personal projects, or internship experience will be given preference.\n\nIdeal Candidate Profile\n\n* Passionate about DevOps, cloud computing, and automation.\n* Willingness to learn new tools, technologies, and industry practices.\n* Ability to identify problems and work towards practical solutions.\n* Self-motivated, responsible, and comfortable working in a collaborative environment.\n* Strong interest in building and maintaining scalable, secure, and reliable infrastructure.\n\n**Join Kaynex Technologies and start building your career in DevOps!**\n\nPay: From ₹5,000.00 per month\n\nBenefits:\n\n* Flexible schedule\n\nWork Location: In person",
     "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010333908492",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "AWS",
@@ -2553,7 +2866,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_112",
+    "id": "a4036032-9675-49bd-b008-59da7b171648",
     "company_name": "Vega Drones Pvt Ltd",
     "company_logo_url": "https://www.google.com/s2/favicons?domain=vegadrones.com&sz=128",
     "title": "Embedded Engineer",
@@ -2565,9 +2878,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "₹20,000 - 30,000 / month",
     "description": "Job Description – Embedded Engineer (Fresher)\n\n**Company:** Vega Drones Private Limited  \n**Position:** Embedded Engineer – Fresher  \n**Experience:** 0–1 Years (Freshers can apply)  \n**Location:** Ghaziabad, Uttar Pradesh  \n**Employment Type:** Full-Time\n\nAbout Vega Drones Private Limited\n\nAt Vega Drones Private Limited, we are building India's first integrated indigenous drone components distribution ecosystem. We work with advanced drone technologies, UAV systems, electronic components, and embedded solutions.\n\nWe are looking for passionate and enthusiastic freshers who are interested in Embedded Systems, Electronics, and Hardware Development and are eager to work on real-world engineering projects.\n\nJob Responsibilities\n\n* Work on embedded systems development, testing, and debugging.\n* Assist in developing and integrating microcontroller-based systems.\n* Work with platforms such as Arduino, ESP32, STM32, Raspberry Pi, etc.\n* Understand and work with electronic circuits, sensors, modules, and communication interfaces.\n* Assist in hardware-software integration and troubleshooting.\n* Work on embedded C/C++ programming and firmware development.\n* Participate in testing, prototyping, and development of drone/UAV-related electronic systems.\n* Research new embedded technologies and contribute innovative ideas to ongoing projects.\n\nRequired Technical Skills\n\n* Basic knowledge of Embedded Systems and Microcontrollers.\n* Understanding of C/C++ programming.\n* Familiarity with Arduino, ESP32, STM32, or similar development boards.\n* Basic understanding of electronic components, sensors, and circuit diagrams.\n* Knowledge of communication protocols such as UART, SPI, I2C, and CAN will be an advantage.\n* Basic knowledge of hardware testing, debugging, and troubleshooting.\n\nCandidate Requirements\n\n* B.Tech / B.E. / Diploma in Electronics & Communication, Electrical, Electronics, Instrumentation, or a related engineering field.\n* Freshers with strong practical knowledge are encouraged to apply.\n* Must have completed multiple academic or personal projects related to Embedded Systems, Electronics, IoT, Robotics, or Microcontrollers.\n* Should be genuinely interested in learning and exploring embedded technologies.\n* Good problem-solving and analytical skills.\n* Self-motivated, curious, and willing to work on hands-on technical projects.\n\nWhat We Are Looking For\n\n* Candidates who enjoy building electronic projects rather than focusing only on theoretical knowledge.\n* Students who have developed projects using Arduino, ESP32, STM32, sensors, or other microcontrollers.\n* Candidates who can explain their college projects, including their individual contribution, hardware used, programming, and implementation.\n* A strong willingness to learn new technologies and work on innovative drone and embedded applications.\n\nPreferred Qualifications\n\n* Projects related to drones, UAVs, robotics, IoT, flight controllers, or wireless communication.\n* Participation in technical competitions, hackathons, or engineering project exhibitions.\n\nPay: ₹20,000.00 - ₹30,000.00 per month\n\nBenefits:\n\n* Leave encashment\n* Paid sick time\n* Paid time off\n\nWork Location: In person",
     "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010334048374",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "Embedded Systems",
@@ -2575,7 +2888,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_113",
+    "id": "ea3e6f21-ef4b-4f1a-a5c9-e3f951a61651",
     "company_name": "VSP TECHVERSE",
     "company_logo_url": "https://www.google.com/s2/favicons?domain=vsptechverse.com&sz=128",
     "title": "Forward deployed engineer",
@@ -2587,9 +2900,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "₹15,000 - 20,000 / month",
     "description": "**JOB DESCRIPTION**\n\nVSP Techverse – AI & Robotics Institute\n\n**Position: Full Stack Developer / Robotics Engineer / Humanoid Robotics Engineer/Forward Deployed Engineer**\n\n**Employment Type: Full-Time**\n\nJob Location: Hyderabad (Work from Office)\n\nSalary Package: 1.8 LPA – 2 LPA\n\nExperience: Freshers Candidates\n\nQualification: B.Tech / Any Degree\n\nEligible Batches: 2024, 2025 & 2026\n\n**1. About VSP Techverse VSP Techverse focuses on developing skilled professionals in Artificial Intelligence, Robotics, Humanoid Robotics, and emerging technologies. We aim to provide practical technical training and career opportunities to passionate candidates.**\n\n**2. Open Positions**  Full Stack Developers **Robotics Engineers**  Humanoid Robotics Engineers\n\n3. Roles & Responsibilities Full Stack Developer\n\n* Develop and maintain web applications.\n* Work on frontend and backend technologies.\n* Understand project requirements and implement solutions.\n* Collaborate with the technical team on live projects. Robotics Engineer\n* Work on robotics concepts, sensors, and actuators.\n* Develop and test robotics applications.\n* Work with robotics hardware and software.\n* Participate in practical robotics projects. Humanoid Robotics Engineer\n* Work on humanoid robotics technologies.\n* Understand robot movements, sensors, and control systems.\n* Assist in developing and testing humanoid robot applications.\n* Work with the technical team on robotics projects.\n\n4. Eligibility Criteria **B.Tech graduates and degree holders are eligible.**\n\nFreshers candidates can apply.\n\n* Candidates without prior industry experience are welcome.\n* Passion for learning AI, Robotics, and emerging technologies.\n* Basic technical knowledge and willingness to learn. Training & Employment\n* Selected candidates will receive technical training from our technical team.\n* Candidates will develop practical skills through guided learning and project exposure.\n* Employment opportunities will be provided after training, based on programme requirements and selection criteria.\n\nA 10-month job guarantee is offered, subject to agreed employment terms and conditions. Salary & Benefits\n\nSalary Package: 1.8 LPA – 2 LPA.\n\n* Technical training and practical learning opportunities.\n* Exposure to AI and Robotics technologies.\n* Opportunity to work with the technical team on projects.\n* Career development in emerging technology domains.\n\n**Work Location Hyderabad – Work from Office**\n\nHow to Apply?\n\nInterested candidates can share their updated resumes with our recruitment team. Shortlisted candidates will be contacted regarding the interview process and further selection steps.\n\nContact Details Contact Number: **6309767122**\n\nEmail: **gopichand@vsptechverse.com**\n\nVSP Techverse – Innovate, Learn & Grow in AI and Robotics!\n\nPay: ₹15,000.00 - ₹20,000.00 per month\n\nWork Location: In person",
     "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010333850702",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "AI",
@@ -2597,7 +2910,7 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "lead_114",
+    "id": "3f8f7ef1-a10c-45ae-8ec7-cba879aea4a1",
     "company_name": "FICUS IT SERVICES PRIVATE LIMITED",
     "company_logo_url": "https://www.google.com/s2/favicons?domain=ficusit.com&sz=128",
     "title": "Junior Software Engineer (Fresher / 0–1 Year Experience)",
@@ -2609,9 +2922,9 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     "stipend_or_salary": "₹2.5 - 3.5 LPA",
     "description": "**Job Description**\n\nWe are looking for enthusiastic and motivated **Junior Software Engineers** who are passionate about software development and eager to learn. If you enjoy solving problems, building applications, and continuously improving your skills, we'd love to hear from you.\n\n**Key Responsibilities**\n\n* Develop, test, and maintain software applications.\n* Write clean, efficient, and maintainable code.\n* Work with SQL databases to create queries and manage data.\n* Debug and resolve software issues.\n* Collaborate with senior developers and team members on real-world projects.\n* Learn new technologies and contribute to ongoing product development.\n\n**Eligibility**\n\n* B.E./B.Tech/MCA or equivalent.\n* Freshers, candidates with up to **1 year of experience, or 2025 graduates** are eligible to apply.\n* Candidates who have not yet taken up a full-time job after graduation are welcome, provided they have spent the time productively by working on personal projects, internships, certifications, open-source contributions, freelancing, or other technical learning.\n* Strong problem-solving skills and a willingness to learn.\n\n**Required Skills**\n\n* Good knowledge of **at least one programming language** (such as C#, Java, Python, C++, JavaScript, or similar).\n* Good knowledge of **at least one SQL database** (SQL Server, MySQL, PostgreSQL, Oracle, or similar).\n* Basic understanding of software development concepts and database fundamentals.\n\n**Preferred**\n\n* Personal projects, GitHub profile, portfolio, internships, or coding competition participation.\n* Good communication skills and the ability to work effectively in a team.\n\n**Work Location**\n\n**This is a Work From Office position.**\n\n* Work location: **Erode, Tamil Nadu**.\n* Candidates from outside Erode must be willing to **relocate to Erode** before joining.\n* Candidates looking for remote or hybrid work are requested not to apply.\n\n**What We Offer**\n\n* A supportive and learning-focused work environment.\n* Hands-on experience with real-world software development projects.\n* Mentorship from experienced software engineers.\n* Opportunities to learn new technologies and grow professionally.\n* A culture that values innovation, collaboration, ownership, and continuous improvement.\n\nIf you are passionate about software development, enjoy learning new technologies, and are looking for an environment where you can build a strong career, we encourage you to apply.\n\nPay: ₹250,000.00 - ₹350,000.00 per year\n\nBenefits:\n\n* Paid sick time\n\nAbility to commute/relocate:\n\n* Erode, Tamil Nadu (Erode, Erode District): Reliably commute or planning to relocate before starting work (Required)\n\nWork Location: In person",
     "apply_url": "https://www.glassdoor.co.in/job-listing/j?jl=1010333956232",
-    "source": "Official",
+    "source": "Verified Direct ATS",
     "age": "Active Now",
-    "batch_eligibility": "2024 - 2027",
+    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
     "tags": [
       "Cohort: 24 Nov 2026",
       "Python",
