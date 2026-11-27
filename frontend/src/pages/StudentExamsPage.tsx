@@ -197,6 +197,18 @@ export default function StudentExamsPage() {
     staleTime: 60 * 1000,
   });
 
+  // Always preserve the logged-in user's email for self-practice exam ownership checks
+  // even when they do not have an enrolled college tpo_students record (e.g., individual Pro Pass).
+  const effectiveStudentProfile = useMemo(
+    () =>
+      studentRecord
+        ? { ...studentRecord, email: studentRecord.email || user?.email || undefined }
+        : user?.email
+        ? { email: user.email }
+        : null,
+    [studentRecord, user?.email]
+  );
+
   // 3. User Subscription Status (Campus Pro Pass vs Free)
   const { data: subData } = useQuery({
     queryKey: ['user-subscription-info', user?.email],
@@ -322,7 +334,7 @@ export default function StudentExamsPage() {
     if (!isAdmin && !isTpoAdmin) {
       list = list.filter(e => {
         if (e.attempt && isAttemptCompleted(e.attempt)) return true;
-        return isStudentEligibleForExam(e, studentRecord, {
+        return isStudentEligibleForExam(e, effectiveStudentProfile, {
           isSuperAdmin: false,
           isCollegeTpo: false,
           hasAttempt: Boolean(e.attempt),
@@ -331,7 +343,7 @@ export default function StudentExamsPage() {
     }
 
     return list;
-  }, [activeTab, activeExams, completedExams, upcomingExams, campusExams, selectedCompanyFilter, searchQuery, isAdmin, isTpoAdmin, studentRecord]);
+  }, [activeTab, activeExams, completedExams, upcomingExams, campusExams, selectedCompanyFilter, searchQuery, isAdmin, isTpoAdmin, effectiveStudentProfile]);
 
   const renderStudentExamsContent = () => (
     <div className="space-y-8 animate-fadeIn">
@@ -831,7 +843,7 @@ export default function StudentExamsPage() {
             const isStudentPracticeExam = exam.college_id === 'SELF' || exam.college_id === 'INDIVIDUAL';
             const isCollegeTpoExam = !isPublicAdminExam && !isStudentPracticeExam;
 
-            const isEligible = isStudentEligibleForExam(exam, studentRecord, {
+            const isEligible = isStudentEligibleForExam(exam, effectiveStudentProfile, {
               isSuperAdmin: isAdmin,
               isCollegeTpo: isTpoAdmin,
               hasAttempt: Boolean(exam.attempt),

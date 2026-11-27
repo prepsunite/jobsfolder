@@ -1385,18 +1385,20 @@ export default function MockExamTestPage() {
           tabSwitchCount: tabSwitches,
           proctorEvents: events,
         });
-        if (hb?.serverNowMs) setServerNowMs(hb.serverNowMs);
-        if (hb?.serverDeadlineMs && hb.serverDeadlineMs > 0) {
-          serverDeadlineMsRef.current = hb.serverDeadlineMs;
-        }
-        if (hb?.expired) {
-          handleFinalSubmit('TIMED_OUT');
-        } else if (hb?.terminated) {
-          handleFinalSubmit('TERMINATED_MALPRACTICE');
-        } else if ((hb as any)?.finalized) {
-          queryClient.invalidateQueries({ queryKey: ['candidate-existing-attempt', exam?.id] });
-          queryClient.invalidateQueries({ queryKey: ['student-campus-mock-exams'] });
-          setTestPhase('SUBMITTED');
+        if (hb && typeof hb === 'object') {
+          if (hb.serverNowMs) setServerNowMs(hb.serverNowMs);
+          if (hb.serverDeadlineMs && hb.serverDeadlineMs > 0) {
+            serverDeadlineMsRef.current = hb.serverDeadlineMs;
+          }
+          if (hb.expired) {
+            handleFinalSubmit('TIMED_OUT');
+          } else if (hb.terminated) {
+            handleFinalSubmit('TERMINATED_MALPRACTICE');
+          } else if ((hb as { finalized?: boolean }).finalized) {
+            queryClient.invalidateQueries({ queryKey: ['candidate-existing-attempt', exam?.id] });
+            queryClient.invalidateQueries({ queryKey: ['student-campus-mock-exams'] });
+            setTestPhase('SUBMITTED');
+          }
         }
       }
     }, 15000);
