@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, Link, useNavigate, useLocation, useSearchParams } from 'react-router';
 // Native Document Explorer View Enabled
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -185,23 +185,56 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
   // Paywall & Monetization State
   const [showPaywallModal, setShowPaywallModal] = useState(false);
   const [hasOldPapersAccess, setHasOldPapersAccess] = useState<boolean>(false);
+  const [accessCheckedExamId, setAccessCheckedExamId] = useState<string | null>(null);
+  const autoPromptedDirectExamRef = useRef<string | null>(null);
 
   // Live Supabase entitlement check — re-runs whenever the exam changes
   const checkLiveAccess = useCallback(async () => {
-    if (!currentExam) { setHasOldPapersAccess(false); return; }
-    if (isAdmin) { setHasOldPapersAccess(true); return; }
+    if (!currentExam) {
+      setHasOldPapersAccess(false);
+      setAccessCheckedExamId(null);
+      return;
+    }
+    if (isAdmin) {
+      setHasOldPapersAccess(true);
+      setAccessCheckedExamId(currentExam.id);
+      return;
+    }
     const userEmail = user?.email;
-    if (!userEmail) { setHasOldPapersAccess(false); return; }
+    if (!userEmail) {
+      setHasOldPapersAccess(false);
+      setAccessCheckedExamId(currentExam.id);
+      return;
+    }
     try {
       const granted = await supabasePaymentService.verifyEntitlementOnSupabase(userEmail, currentExam.id);
       setHasOldPapersAccess(granted);
     } catch {
       // Fail closed strictly on error
       setHasOldPapersAccess(false);
+    } finally {
+      setAccessCheckedExamId(currentExam.id);
     }
   }, [currentExam, isAdmin, user?.email]);
 
   useEffect(() => { checkLiveAccess(); }, [checkLiveAccess]);
+
+  // Auto-open payment popup when landing directly on /oldpapers without access
+  useEffect(() => {
+    if (
+      activeTab === 'oldPapers' &&
+      isDirectOldPapersUrl &&
+      currentExam &&
+      accessCheckedExamId === currentExam.id &&
+      !hasOldPapersAccess &&
+      !isAdmin &&
+      !currentExam.isPublicExam &&
+      autoPromptedDirectExamRef.current !== currentExam.id
+    ) {
+      autoPromptedDirectExamRef.current = currentExam.id;
+      setShowPaywallModal(true);
+    }
+  }, [activeTab, isDirectOldPapersUrl, currentExam, accessCheckedExamId, hasOldPapersAccess, isAdmin]);
 
   const handleToggleExamPublic = async (isPublic: boolean) => {
     if (!currentExam) return;
@@ -960,7 +993,19 @@ export default function CompanyDetailPage({ isOldPapersRoute }: CompanyDetailPag
                     ].map((tab) => (
                       <button
                         key={tab.id}
-                        onClick={() => setActiveTab(tab.id as TabType)}
+                        onClick={() => {
+                          setActiveTab(tab.id as TabType);
+                          if (
+                            tab.id === 'oldPapers' &&
+                            currentExam &&
+                            accessCheckedExamId === currentExam.id &&
+                            !hasOldPapersAccess &&
+                            !isAdmin &&
+                            !currentExam.isPublicExam
+                          ) {
+                            setShowPaywallModal(true);
+                          }
+                        }}
                         className={`pb-3 text-sm font-bold transition-all border-b-2 ${
                           activeTab === tab.id
                             ? 'border-[#FD4A32] dark:border-[#FD4A32] text-[#FD4A32] dark:text-[#FD4A32]'

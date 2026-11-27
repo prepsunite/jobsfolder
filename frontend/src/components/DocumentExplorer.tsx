@@ -57,6 +57,7 @@ export default function DocumentExplorer({
   tabs,
   hasAccess,
   isAdmin = false,
+  isPublicExam = false,
   watermarkText,
   className = '',
   onOpenPaywall,
@@ -555,7 +556,14 @@ export default function DocumentExplorer({
                 isAdmin={isAdmin}
                 hasAccess={hasAccess}
                 searchQuery={searchQuery}
-                onSelectNode={setSelectedNodeId}
+                onSelectNode={(nodeId) => {
+                  setSelectedNodeId(nodeId);
+                  const targetNode = flatNodes.find(n => n.id === nodeId);
+                  const nodeUnlocked = hasAccess || isAdmin || isPublicExam || targetNode?.isFree === true;
+                  if (!nodeUnlocked) {
+                    onOpenPaywall();
+                  }
+                }}
                 onToggleExpand={toggleExpand}
                 onSetRenameValue={setRenameValue}
                 onSetEmojiValue={setEmojiValue}
