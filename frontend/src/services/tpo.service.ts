@@ -6495,10 +6495,13 @@ export const tpoService = {
     // 3. Direct column-safe fallback (pre-migration / admin only, never selects correct_answer/solutions)
     if (rawQuestions.length === 0) {
       try {
-        const { data, error } = await supabase
-          .from('topic_questions')
-          .select('id, statement, options, difficulty, topic_id, question_number, structured_explanation')
-          .in('id', questionIds);
+        const uuidIds = questionIds.filter(id => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id));
+        const { data, error } = uuidIds.length > 0
+          ? await supabase
+              .from('topic_questions')
+              .select('id, statement, options, difficulty, topic_id, question_number, structured_explanation')
+              .in('id', uuidIds)
+          : { data: [], error: null };
 
         if (!error && data && data.length > 0) {
           rawQuestions = data.map(q => {
@@ -7533,10 +7536,13 @@ export const tpoService = {
       : Object.keys(attempt.responses || {}).filter(k => !k.startsWith('__'));
     let questions: any[] = [];
     try {
-      const { data } = await supabase
-        .from('topic_questions')
-        .select('id, statement, options, correct_answer, explanation, difficulty, topic_id, structured_explanation')
-        .in('id', questionIds);
+      const uuidReviewIds = questionIds.filter(id => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id));
+      const { data } = uuidReviewIds.length > 0
+        ? await supabase
+            .from('topic_questions')
+            .select('id, statement, options, correct_answer, explanation, difficulty, topic_id, structured_explanation')
+            .in('id', uuidReviewIds)
+        : { data: [] };
       if (data) {
         questions = data.map((q: any) => {
           let numAnswer = q.correct_answer;
@@ -7667,10 +7673,13 @@ export const tpoService = {
 
     // 1. Topic MCQs
     try {
-      const { data } = await supabase
-        .from('topic_questions')
-        .select('id, statement, options, correct_answer, explanation, difficulty, topic_id, structured_explanation')
-        .in('id', allQIds);
+      const uuidAllQIds = allQIds.filter(id => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id));
+      const { data } = uuidAllQIds.length > 0
+        ? await supabase
+            .from('topic_questions')
+            .select('id, statement, options, correct_answer, explanation, difficulty, topic_id, structured_explanation')
+            .in('id', uuidAllQIds)
+        : { data: [] };
 
       if (data) {
         data.forEach((q: any) => {
@@ -8326,10 +8335,13 @@ export const tpoService = {
     if (missingQIds.length > 0) {
       const extraQuestions: any[] = [];
       try {
-        const { data: topicData } = await supabase
-          .from('topic_questions')
-          .select('id, statement, options, correct_answer, explanation, difficulty, topic_id, structured_explanation')
-          .in('id', missingQIds);
+        const uuidMissingQIds = missingQIds.filter(id => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id));
+        const { data: topicData } = uuidMissingQIds.length > 0
+          ? await supabase
+              .from('topic_questions')
+              .select('id, statement, options, correct_answer, explanation, difficulty, topic_id, structured_explanation')
+              .in('id', uuidMissingQIds)
+          : { data: [] };
         if (topicData) {
           topicData.forEach((q: any) => {
             let numAnswer = q.correct_answer;

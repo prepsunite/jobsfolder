@@ -830,9 +830,6 @@ export default function StudentExamsPage() {
               ? exam.target_departments.join(', ')
               : 'All Branches';
 
-            const totalQuestions =
-              exam.sections?.reduce((acc, s) => acc + (s.question_ids?.length || 0), 0) || 0;
-
             const isPassed =
               isFinished &&
               !isMalpractice &&
@@ -916,17 +913,12 @@ export default function StudentExamsPage() {
                               <Globe className="w-2.5 h-2.5" />
                               Open National
                             </span>
-                          ) : isStudentPracticeExam ? (
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200 dark:border-purple-800 flex items-center gap-1">
-                              <Lock className="w-2.5 h-2.5" />
-                              Private Practice
-                            </span>
-                          ) : (
+                          ) : !isStudentPracticeExam ? (
                             <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-gray-100 dark:bg-[#202228] text-gray-600 dark:text-gray-400 border border-gray-200/50 dark:border-white/5 flex items-center gap-1">
                               <Building2 className="w-2.5 h-2.5" />
                               Campus Drive
                             </span>
-                          )}
+                          ) : null}
                         </div>
                         <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate mt-0.5">
                           {isPublicAdminExam ? 'Open National Mock Challenge' : isStudentPracticeExam ? 'Private Student Blueprint Practice' : companyIndustry}
@@ -1036,55 +1028,32 @@ export default function StudentExamsPage() {
                     </div>
                   </div>
 
-                  {/* Smart Pill Badges (Non-Repetitive, Watchable Tags) */}
-                  <div className="flex flex-wrap items-center gap-2 pt-1">
-                    {/* Structure badge */}
-                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-xl bg-gray-100/90 dark:bg-[#1d1f24] text-gray-700 dark:text-gray-300 border border-gray-200/60 dark:border-white/5">
-                      <BookOpen className="w-3 h-3 text-gray-400" />
-                      <span>{exam.sections?.length || 1} Section{exam.sections?.length !== 1 ? 's' : ''}</span>
-                      {totalQuestions > 0 && <span className="opacity-70">&bull; {totalQuestions} Qs</span>}
-                    </span>
-
-                    {/* Eligibility Badge - Clean & Non-Repetitive */}
-                    {isPublicAdminExam ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-xl bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20">
-                        <Globe className="w-3 h-3 text-blue-500" />
-                        <span>Open to Any Student Nationwide</span>
-                      </span>
-                    ) : isStudentPracticeExam ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-xl bg-purple-500/10 text-purple-700 dark:text-purple-400 border border-purple-500/20">
-                        <Lock className="w-3 h-3 text-purple-500" />
-                        <span>Strictly Personal Practice (Locked)</span>
-                      </span>
-                    ) : isOpenToAll ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
-                        <Users className="w-3 h-3" />
-                        <span>Open to All Students</span>
-                      </span>
-                    ) : isRestrictedForStudent ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-xl bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20">
-                        <Lock className="w-3 h-3" />
-                        <span>Cohort: {cohortRestrictionLabel}</span>
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-xl bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20">
-                        <CheckCircle2 className="w-3 h-3" />
-                        <span>Target: {targetDepts}</span>
-                      </span>
-                    )}
-
-                    {/* Anti-Cheat Proctoring Badge */}
-                    {exam.enable_tab_switch_detection ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-xl bg-orange-500/10 text-[#FD4A32] border border-[#FD4A32]/20">
-                        <ShieldCheck className="w-3 h-3" />
-                        <span>Anti-Cheat (Max {exam.max_tab_switches_allowed || 3})</span>
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-normal px-2.5 py-1 rounded-xl bg-gray-100/70 dark:bg-[#1a1b1f] text-gray-500 dark:text-gray-400 border border-gray-200/50 dark:border-white/5">
-                        Standard Proctored
-                      </span>
-                    )}
-                  </div>
+                  {/* Eligibility Badge (Campus & National drives only) */}
+                  {!isStudentPracticeExam && (
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                      {isPublicAdminExam ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-xl bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20">
+                          <Globe className="w-3 h-3 text-blue-500" />
+                          <span>Open to Any Student Nationwide</span>
+                        </span>
+                      ) : isOpenToAll ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+                          <Users className="w-3 h-3" />
+                          <span>Open to All Students</span>
+                        </span>
+                      ) : isRestrictedForStudent ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-xl bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20">
+                          <Lock className="w-3 h-3" />
+                          <span>Cohort: {cohortRestrictionLabel}</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-xl bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20">
+                          <CheckCircle2 className="w-3 h-3" />
+                          <span>Target: {targetDepts}</span>
+                        </span>
+                      )}
+                    </div>
+                  )}
 
                   {/* Timing Banner strip (if scheduled or active closing window) */}
                   {(isUpcoming || isConcluded || (isLive && exam.end_time)) && (

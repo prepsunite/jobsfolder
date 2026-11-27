@@ -585,19 +585,23 @@ export default async function handler(req, res) {
     if (orderedIds.length === 0) return [];
 
     const byId = new Map();
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     const CHUNK = 150;
     for (let i = 0; i < orderedIds.length; i += CHUNK) {
       const slice = orderedIds.slice(i, i + CHUNK);
+      const uuidSlice = slice.filter((id) => UUID_RE.test(String(id)));
       const [tqRes, tmRes, tpRes] = await Promise.all([
-        supabaseService
-          .from('topic_questions')
-          .select(
-            includeSolutions
-              ? 'id, topic_id, question_number, statement, options, difficulty, correct_answer, explanation, structured_explanation'
-              : 'id, topic_id, question_number, statement, options, difficulty, structured_explanation'
-          )
-          .in('id', slice)
-          .or('is_deleted.is.null,is_deleted.eq.false'),
+        uuidSlice.length > 0
+          ? supabaseService
+              .from('topic_questions')
+              .select(
+                includeSolutions
+                  ? 'id, topic_id, question_number, statement, options, difficulty, correct_answer, explanation, structured_explanation'
+                  : 'id, topic_id, question_number, statement, options, difficulty, structured_explanation'
+              )
+              .in('id', uuidSlice)
+              .or('is_deleted.is.null,is_deleted.eq.false')
+          : Promise.resolve({ data: [] }),
         supabaseService
           .from('technical_mcqs')
           .select(
@@ -2089,10 +2093,14 @@ export default async function handler(req, res) {
         const tmCorrectMap = new Map();
         const codingProblemSet = new Set();
 
+        const UUID_RE_GRADE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
         for (let i = 0; i < allQIds.length; i += 200) {
           const slice = allQIds.slice(i, i + 200);
+          const uuidSlice = slice.filter((id) => UUID_RE_GRADE.test(String(id)));
           const [tqRes, tmRes, tpRes] = await Promise.all([
-            supabaseService.from('topic_questions').select('id, correct_answer').in('id', slice),
+            uuidSlice.length > 0
+              ? supabaseService.from('topic_questions').select('id, correct_answer').in('id', uuidSlice)
+              : Promise.resolve({ data: [] }),
             supabaseService.from('technical_mcqs').select('id, correct_option_index').in('id', slice),
             supabaseService.from('technical_problems').select('id').in('id', slice),
           ]);
