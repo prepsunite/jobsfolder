@@ -2780,7 +2780,7 @@ export default function MockExamTestPage() {
                 setShowSubmitConfirm(true);
               }}
               disabled={isSubmitting || isCodeExecuting}
-              className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-[#121417] dark:bg-white text-white dark:text-black text-xs font-bold uppercase tracking-wider hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm cursor-pointer"
+              className="inline-flex items-center2 gap-1.5 px-4 py-1.5 rounded-xl bg-[#121417] dark:bg-white text-white dark:text-black text-xs font-bold uppercase tracking-wider hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm cursor-pointer"
             >
               {isCodeExecuting ? (
                 <>

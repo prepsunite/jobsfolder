@@ -78,7 +78,7 @@ export default function DocumentExplorer({
   const urlQuestionId = searchParams.get('questionId') || searchParams.get('q');
   const [selectedCodingQuestion, setSelectedCodingQuestion] = useState<PaperQuestion | null>(null);
 
-  const handleOpenQuestion = useCallback((q: PaperQuestion) => {
+  const handleSelectQuestion = useCallback((q: PaperQuestion) => {
     setSelectedCodingQuestion(q);
     setSearchParams(prev => {
       const next = new URLSearchParams(prev);
@@ -86,6 +86,16 @@ export default function DocumentExplorer({
       return next;
     }, { replace: true });
   }, [setSearchParams]);
+
+  const handleOpenQuestion = useCallback((q: PaperQuestion) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('questionId', q.id);
+    url.searchParams.delete('q');
+    const win = window.open(url.toString(), '_blank', 'noopener,noreferrer');
+    if (!win) {
+      handleSelectQuestion(q);
+    }
+  }, [handleSelectQuestion]);
 
   const handleCloseQuestion = useCallback(() => {
     setSelectedCodingQuestion(null);
@@ -916,7 +926,7 @@ export default function DocumentExplorer({
         <PaperCodingModal
           question={selectedCodingQuestion}
           questions={parsedQuestions.length > 0 ? parsedQuestions : [selectedCodingQuestion]}
-          onSelectQuestion={handleOpenQuestion}
+          onSelectQuestion={handleSelectQuestion}
           isOpen={!!selectedCodingQuestion}
           onClose={handleCloseQuestion}
           companyName={companyName}

@@ -116,7 +116,7 @@ export default function PaperProblemListView({
                     type="button"
                     onClick={() => onSolveQuestion(question)}
                     className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-display font-bold bg-[#FD4A32] hover:bg-[#E0351D] text-white transition-all shadow-xs cursor-pointer group"
-                    title="Open in Coding IDE"
+                    title="Open in Coding IDE (Opens in new tab)"
                   >
                     <Terminal className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
                     <span>Solve</span>
@@ -215,6 +215,7 @@ export default function PaperProblemListView({
                   type="button"
                   onClick={() => onSolveQuestion(question)}
                   className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-display font-bold text-[#FD4A32] hover:bg-[#FD4A32]/10 transition-all cursor-pointer"
+                  title="Open in Coding IDE (Opens in new tab)"
                 >
                   <Terminal className="w-3.5 h-3.5" />
                   <span>Practice in IDE</span>
