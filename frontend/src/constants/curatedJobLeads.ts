@@ -2073,28 +2073,6 @@ export const CURATED_JOB_LEADS: CuratedJobLead[] = [
     ]
   },
   {
-    "id": "bdc9b9dd-e0b2-4959-8f6c-c9c02d44a5d2",
-    "company_name": "T9 GIC",
-    "company_logo_url": "https://www.google.com/s2/favicons?domain=t9gic.com&sz=128",
-    "title": "Dot Net Full stack Developer",
-    "type": "JOB",
-    "location": "Hyderabad, Telangana",
-    "experience_min": 0,
-    "experience_max": 1,
-    "experience_label": "0-1 Years",
-    "stipend_or_salary": "Competitive / Market standard",
-    "description": "### About the Opportunity (via Unstop)\n**T9 GIC** is actively hiring for **Dot Net Full stack Developer** (full-time graduate engineer role) on Unstop for early-career engineers and fresh graduates in **Hyderabad, Telangana**.\n\n### Key Details\n- **Role:** Dot Net Full stack Developer\n- **Company:** T9 GIC\n- **Location:** Hyderabad, Telangana\n- **Eligibility:** Students & Fresh Graduates (Class of 2024 / 2025 / 2026 / 2027)\n- **Application Portal:** Direct registration on Unstop",
-    "apply_url": "https://unstop.com/jobs/dot-net-full-stack-developer-t9-gic-1826398",
-    "source": "Verified Direct ATS",
-    "age": "Active Now",
-    "batch_eligibility": "Class of 2024 / 2025 / 2026 / 2027",
-    "tags": [
-      "Cohort: 24 Nov 2026",
-      "Unstop",
-      "Campus Hiring"
-    ]
-  },
-  {
     "id": "b93ae6af-410e-4944-a591-2a4d335a3fbe",
     "company_name": "Prishusoft",
     "company_logo_url": "https://www.google.com/s2/favicons?domain=prishusoft.com&sz=128",
