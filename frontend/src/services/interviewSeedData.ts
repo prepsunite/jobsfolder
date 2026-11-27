@@ -11831,7 +11831,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Oracle"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 4
@@ -11890,7 +11890,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Goldman Sachs"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 6
@@ -11950,7 +11950,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Infosys"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 8
@@ -12010,7 +12010,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Netflix"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 10
@@ -12040,7 +12040,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "TCS"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 11
@@ -12098,7 +12098,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Salesforce"
     ],
     "frequency": "HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 13
@@ -12363,7 +12363,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Google"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 22
@@ -12392,7 +12392,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Microsoft"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 23
@@ -12451,7 +12451,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Adobe"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 25
@@ -12510,7 +12510,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Goldman Sachs"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 27
@@ -12569,7 +12569,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Google"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 29
@@ -12658,7 +12658,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Epic Games"
     ],
     "frequency": "HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 32
@@ -12687,7 +12687,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Cisco"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 33
@@ -12834,7 +12834,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Meta"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 38
@@ -12864,7 +12864,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Uber"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 39
@@ -14000,7 +14000,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Oracle"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 77
@@ -14030,7 +14030,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Uber"
     ],
     "frequency": "HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 78
@@ -14061,7 +14061,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Meta"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 79
@@ -14091,7 +14091,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Nvidia"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 80
@@ -14121,7 +14121,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Oracle"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 81
@@ -14182,7 +14182,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Nvidia"
     ],
     "frequency": "HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 83
@@ -14242,7 +14242,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "JetBrains"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 85
@@ -14573,7 +14573,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Swiggy"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 96
@@ -14604,7 +14604,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Adobe"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 97
@@ -14635,7 +14635,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Bloomberg"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 98
@@ -14665,7 +14665,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "PayPal"
     ],
     "frequency": "HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 99
@@ -14697,7 +14697,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Apple"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 100
@@ -14727,7 +14727,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Google"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 1
@@ -14757,7 +14757,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Cisco"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 2
@@ -14788,7 +14788,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Flipkart"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 3
@@ -14818,7 +14818,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Uber"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 4
@@ -14849,7 +14849,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Goldman Sachs"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 5
@@ -14879,7 +14879,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Uber"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 6
@@ -14910,7 +14910,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Cisco"
     ],
     "frequency": "HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 7
@@ -14940,7 +14940,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Adobe"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 8
@@ -14971,7 +14971,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Goldman Sachs"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 9
@@ -15001,7 +15001,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Cisco"
     ],
     "frequency": "HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 10
@@ -15031,7 +15031,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Goldman Sachs"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 11
@@ -15061,7 +15061,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Amazon"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 12
@@ -15092,7 +15092,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Goldman Sachs"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 13
@@ -15122,7 +15122,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Oracle"
     ],
     "frequency": "HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 14
@@ -15154,7 +15154,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Apple"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 15
@@ -15184,7 +15184,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Goldman Sachs"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 16
@@ -15214,7 +15214,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Oracle"
     ],
     "frequency": "HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 17
@@ -15244,7 +15244,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Oracle"
     ],
     "frequency": "HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 18
@@ -15307,7 +15307,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Uber"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 20
@@ -15338,7 +15338,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Cisco"
     ],
     "frequency": "HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 21
@@ -15368,7 +15368,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Paypal"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 22
@@ -15460,7 +15460,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Meta"
     ],
     "frequency": "HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 25
@@ -15492,7 +15492,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Salesforce"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 26
@@ -15552,7 +15552,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Adobe"
     ],
     "frequency": "HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 28
@@ -15674,7 +15674,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Meta"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 32
@@ -15704,7 +15704,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Oracle"
     ],
     "frequency": "HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 33
@@ -15766,7 +15766,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "CockroachDB"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 35
@@ -15826,7 +15826,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Google"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 37
@@ -15888,7 +15888,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Goldman Sachs"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 39
@@ -15919,7 +15919,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Flipkart"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 40
@@ -15949,7 +15949,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Uber"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 41
@@ -15981,7 +15981,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Apple"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 42
@@ -16012,7 +16012,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Netflix"
     ],
     "frequency": "HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 43
@@ -16073,7 +16073,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "CockroachDB"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 45
@@ -16104,7 +16104,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Apple"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 46
@@ -16196,7 +16196,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Salesforce"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 49
@@ -16470,7 +16470,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Snowflake"
     ],
     "frequency": "HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 58
@@ -16501,7 +16501,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Apple"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 59
@@ -16531,7 +16531,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Microsoft"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 60
@@ -16622,7 +16622,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Riak"
     ],
     "frequency": "HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 63
@@ -16684,7 +16684,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Uber"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 65
@@ -16715,7 +16715,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Uber"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 66
@@ -16747,7 +16747,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Uber"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 67
@@ -16778,7 +16778,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Netflix"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 68
@@ -16809,7 +16809,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Stripe"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 69
@@ -16840,7 +16840,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Stripe"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 70
@@ -16871,7 +16871,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Heroku"
     ],
     "frequency": "HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 71
@@ -16902,7 +16902,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Uber"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 72
@@ -16934,7 +16934,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Oracle"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 73
@@ -16965,7 +16965,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Oracle"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 74
@@ -16995,7 +16995,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Google"
     ],
     "frequency": "HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 75
@@ -17026,7 +17026,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "PostGIS Core"
     ],
     "frequency": "HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 76
@@ -17302,7 +17302,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Amazon"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 85
@@ -17364,7 +17364,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Shopify"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 87
@@ -17394,7 +17394,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Oracle"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 88
@@ -17424,7 +17424,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Goldman Sachs"
     ],
     "frequency": "HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 89
@@ -17454,7 +17454,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Amazon"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 90
@@ -17576,7 +17576,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "ZooKeeper"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 94
@@ -17637,7 +17637,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Reddit"
     ],
     "frequency": "HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 96
@@ -17697,7 +17697,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Instagram"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 98
@@ -17759,7 +17759,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Apple"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "HARD",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 100
@@ -17790,7 +17790,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Apple"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 1
@@ -17821,7 +17821,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Qualcomm"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 2
@@ -17883,7 +17883,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Amazon"
     ],
     "frequency": "HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 4
@@ -17914,7 +17914,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "RedHat"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 5
@@ -17944,7 +17944,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "RedHat"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 6
@@ -17975,7 +17975,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Redis Core"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 7
@@ -18006,7 +18006,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Oracle"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 8
@@ -18068,7 +18068,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Apple"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 10
@@ -18161,7 +18161,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Apple"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 13
@@ -18312,7 +18312,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Oracle"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 18
@@ -18343,7 +18343,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Apple"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 19
@@ -18496,7 +18496,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Apple"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 24
@@ -18678,7 +18678,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Meta"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 30
@@ -18709,7 +18709,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Apple"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 31
@@ -18739,7 +18739,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Apple"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 32
@@ -18769,7 +18769,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Oracle"
     ],
     "frequency": "HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 33
@@ -18801,7 +18801,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Apple"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 34
@@ -18988,7 +18988,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Amazon"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 40
@@ -19142,7 +19142,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Microsoft"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 45
@@ -19205,7 +19205,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Microsoft"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 47
@@ -19266,7 +19266,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Dell"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 49
@@ -20553,7 +20553,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Amazon"
     ],
     "frequency": "HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 90
@@ -20991,7 +20991,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Akamai"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 4
@@ -21240,7 +21240,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Amazon"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 12
@@ -21302,7 +21302,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Arista"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 14
@@ -21395,7 +21395,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Google"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 17
@@ -21426,7 +21426,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Arista"
     ],
     "frequency": "HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 18
@@ -21551,7 +21551,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Cisco"
     ],
     "frequency": "HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 22
@@ -21582,7 +21582,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Microsoft"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 23
@@ -21613,7 +21613,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Google"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 24
@@ -21644,7 +21644,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Cisco"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 25
@@ -21894,7 +21894,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Meta"
     ],
     "frequency": "HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 33
@@ -22019,7 +22019,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Cisco"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "HARD",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 37
@@ -22364,7 +22364,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Juniper"
     ],
     "frequency": "HIGH",
-    "difficulty": "HARD",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 48
@@ -24020,7 +24020,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Meta"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 1
@@ -24083,7 +24083,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Microsoft"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 3
@@ -24207,7 +24207,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Uber"
     ],
     "frequency": "HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 7
@@ -24300,7 +24300,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Stripe"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 10
@@ -24393,7 +24393,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Snowflake"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 13
@@ -24488,7 +24488,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Apple"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 16
@@ -24520,7 +24520,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Goldman Sachs"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 17
@@ -24552,7 +24552,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Google"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 18
@@ -24614,7 +24614,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Meta"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 20
@@ -24645,7 +24645,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Microsoft"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 21
@@ -24677,7 +24677,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Oracle"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 22
@@ -24740,7 +24740,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Microsoft"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 24
@@ -24866,7 +24866,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Microsoft"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 28
@@ -24990,7 +24990,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Coinbase"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 32
@@ -25082,7 +25082,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Google"
     ],
     "frequency": "HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 35
@@ -25144,7 +25144,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Uber"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 37
@@ -25267,7 +25267,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Datadog"
     ],
     "frequency": "HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 41
@@ -25298,7 +25298,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Oracle"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "HARD",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 42
@@ -25422,7 +25422,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Oracle"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "HARD",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 46
@@ -25611,7 +25611,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "SELECT FOR UPDATE"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 52
@@ -29036,7 +29036,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Cognizant"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 1
@@ -29061,7 +29061,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "JPMorgan Chase"
     ],
     "frequency": "HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 2
@@ -29238,7 +29238,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Cognizant"
     ],
     "frequency": "HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 9
@@ -29263,7 +29263,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "JPMorgan Chase"
     ],
     "frequency": "MEDIUM",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 10
@@ -29516,7 +29516,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Atlassian"
     ],
     "frequency": "HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 20
@@ -31615,7 +31615,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Uber"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 3
@@ -31715,7 +31715,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Qualcomm"
     ],
     "frequency": "HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 7
@@ -31740,7 +31740,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Microsoft"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 8
@@ -31766,7 +31766,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Cognizant"
     ],
     "frequency": "HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 9
@@ -31791,7 +31791,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "JPMorgan Chase"
     ],
     "frequency": "HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 10
@@ -32094,7 +32094,7 @@ const RAW_SEED_QUESTIONS: any[] = [
       "Razorpay"
     ],
     "frequency": "VERY_HIGH",
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "is_hidden": false,
     "is_deleted": false,
     "sort_order": 22

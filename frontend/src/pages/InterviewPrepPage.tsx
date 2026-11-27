@@ -38,7 +38,7 @@ import {
   Filter,
 } from 'lucide-react';
 import { useAuth, GUEST_EMAIL } from '@/contexts/AuthContext';
-import { interviewService } from '@/services/interview.service';
+import { interviewService, sortQuestionsProgressive } from '@/services/interview.service';
 import InterviewBulkImportModal from '@/components/interview/InterviewBulkImportModal';
 import TopicCheatcodeModal from '@/components/TopicCheatcodeModal';
 import type { InterviewCategory, InterviewTopic, InterviewQuestion } from '@/types/interview';
@@ -253,9 +253,9 @@ export default function InterviewPrepPage() {
       ? Math.round((activeTopicMasteredCount / activeTopicQuestions.length) * 100)
       : 0;
 
-  // Filtered active questions (search + status + difficulty)
+  // Filtered active questions (search + status + difficulty), ordered Basic (EASY) -> Intermediate (MEDIUM) -> Advanced (HARD)
   const filteredActiveQuestions = useMemo(() => {
-    return activeTopicQuestions.filter(q => {
+    const list = activeTopicQuestions.filter(q => {
       if (!isAdmin && q.is_hidden) return false;
       const matchStatus =
         selectedStatus === 'ALL' ||
@@ -275,6 +275,8 @@ export default function InterviewPrepPage() {
 
       return matchStatus && matchDifficulty && matchSearch;
     });
+
+    return sortQuestionsProgressive(list);
   }, [activeTopicQuestions, selectedStatus, selectedDifficulty, searchQuery, isAdmin]);
 
   const totalPages = Math.ceil(filteredActiveQuestions.length / QUESTIONS_PER_PAGE);
@@ -602,6 +604,28 @@ export default function InterviewPrepPage() {
                 </div>
 
                 <div className="flex items-center gap-2 flex-wrap">
+                  {/* Pedagogical Progression Indicator */}
+                  <div
+                    className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#F8F9FA] dark:bg-[#1C1C1C] text-xs font-display border border-[#E9ECEF] dark:border-[#242424]"
+                    title="Curated pedagogical ordering: Starts with foundational core principles (Easy), progresses through application scenarios (Medium), and culminates with advanced internals and edge cases (Hard)."
+                  >
+                    <span className="text-[#868E96] dark:text-[#777777] font-bold text-[10px] uppercase tracking-wider">Order:</span>
+                    <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold text-[11px]">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                      Basic
+                    </span>
+                    <span className="text-[#ADB5BD] dark:text-[#444444] text-[10px]">→</span>
+                    <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold text-[11px]">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                      Intermediate
+                    </span>
+                    <span className="text-[#ADB5BD] dark:text-[#444444] text-[10px]">→</span>
+                    <span className="inline-flex items-center gap-1 text-rose-600 dark:text-rose-400 font-bold text-[11px]">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                      Advanced
+                    </span>
+                  </div>
+
                   <button
                     type="button"
                     onClick={() => setShowCheatcodeModal(true)}

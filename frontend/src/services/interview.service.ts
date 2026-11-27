@@ -27,6 +27,86 @@ type RawDbQuestion = Partial<InterviewQuestionRow> & Partial<InterviewQuestion> 
   title: string;
 };
 
+export const DIFFICULTY_WEIGHT: Record<string, number> = {
+  EASY: 1,
+  MEDIUM: 2,
+  HARD: 3,
+};
+
+export const CANONICAL_DIFFICULTY_OVERRIDES: Record<string, 'EASY' | 'MEDIUM' | 'HARD'> = {
+  // DBMS Easy (introductory & fundamental definitions: 30)
+  'int-dbms-001': 'EASY', 'int-dbms-002': 'EASY', 'int-dbms-003': 'EASY', 'int-dbms-004': 'EASY',
+  'int-dbms-005': 'EASY', 'int-dbms-006': 'EASY', 'int-dbms-007': 'EASY', 'int-dbms-008': 'EASY',
+  'int-dbms-009': 'EASY', 'int-dbms-010': 'EASY', 'int-dbms-011': 'EASY', 'int-dbms-012': 'EASY',
+  'int-dbms-013': 'EASY', 'int-dbms-014': 'EASY', 'int-dbms-015': 'EASY', 'int-dbms-020': 'EASY',
+  'int-dbms-021': 'EASY', 'int-dbms-022': 'EASY', 'int-dbms-026': 'EASY', 'int-dbms-037': 'EASY',
+  'int-dbms-040': 'EASY', 'int-dbms-041': 'EASY', 'int-dbms-058': 'EASY', 'int-dbms-059': 'EASY',
+  'int-dbms-065': 'EASY', 'int-dbms-067': 'EASY', 'int-dbms-068': 'EASY', 'int-dbms-087': 'EASY',
+  'int-dbms-088': 'EASY', 'int-dbms-089': 'EASY',
+
+  // DBMS Hard (deep storage, distributed, recovery & concurrency internals: 31)
+  'int-dbms-016': 'HARD', 'int-dbms-017': 'HARD', 'int-dbms-018': 'HARD', 'int-dbms-025': 'HARD',
+  'int-dbms-028': 'HARD', 'int-dbms-032': 'HARD', 'int-dbms-033': 'HARD', 'int-dbms-035': 'HARD',
+  'int-dbms-039': 'HARD', 'int-dbms-042': 'HARD', 'int-dbms-043': 'HARD', 'int-dbms-045': 'HARD',
+  'int-dbms-046': 'HARD', 'int-dbms-049': 'HARD', 'int-dbms-060': 'HARD', 'int-dbms-063': 'HARD',
+  'int-dbms-066': 'HARD', 'int-dbms-069': 'HARD', 'int-dbms-070': 'HARD', 'int-dbms-071': 'HARD',
+  'int-dbms-072': 'HARD', 'int-dbms-073': 'HARD', 'int-dbms-074': 'HARD', 'int-dbms-075': 'HARD',
+  'int-dbms-076': 'HARD', 'int-dbms-085': 'HARD', 'int-dbms-090': 'HARD', 'int-dbms-094': 'HARD',
+  'int-dbms-096': 'HARD', 'int-dbms-098': 'HARD', 'int-dbms-100': 'HARD',
+
+  // OS Easy (foundations: 22)
+  'int-os-001': 'EASY', 'int-os-002': 'EASY', 'int-os-004': 'EASY', 'int-os-005': 'EASY',
+  'int-os-006': 'EASY', 'int-os-007': 'EASY', 'int-os-008': 'EASY', 'int-os-010': 'EASY',
+  'int-os-013': 'EASY', 'int-os-018': 'EASY', 'int-os-019': 'EASY', 'int-os-024': 'EASY',
+  'int-os-030': 'EASY', 'int-os-031': 'EASY', 'int-os-032': 'EASY', 'int-os-033': 'EASY',
+  'int-os-034': 'EASY', 'int-os-040': 'EASY', 'int-os-045': 'EASY', 'int-os-047': 'EASY',
+  'int-os-049': 'EASY', 'int-os-090': 'EASY',
+
+  // SQL Easy (foundations: 20)
+  'int-sql-001': 'EASY', 'int-sql-003': 'EASY', 'int-sql-007': 'EASY', 'int-sql-010': 'EASY',
+  'int-sql-013': 'EASY', 'int-sql-016': 'EASY', 'int-sql-017': 'EASY', 'int-sql-018': 'EASY',
+  'int-sql-020': 'EASY', 'int-sql-021': 'EASY', 'int-sql-022': 'EASY', 'int-sql-024': 'EASY',
+  'int-sql-028': 'EASY', 'int-sql-032': 'EASY', 'int-sql-035': 'EASY', 'int-sql-037': 'EASY',
+  'int-sql-041': 'EASY', 'int-sql-042': 'EASY', 'int-sql-046': 'EASY', 'int-sql-052': 'EASY',
+
+  // OOPs Easy (foundations: 15)
+  'int-oops-004': 'EASY', 'int-oops-006': 'EASY', 'int-oops-008': 'EASY', 'int-oops-010': 'EASY',
+  'int-oops-011': 'EASY', 'int-oops-013': 'EASY', 'int-oops-022': 'EASY', 'int-oops-023': 'EASY',
+  'int-oops-025': 'EASY', 'int-oops-027': 'EASY', 'int-oops-029': 'EASY', 'int-oops-032': 'EASY',
+  'int-oops-033': 'EASY', 'int-oops-038': 'EASY', 'int-oops-039': 'EASY',
+
+  // OOPs Hard (advanced internals & LLD: 12)
+  'int-oops-077': 'HARD', 'int-oops-078': 'HARD', 'int-oops-079': 'HARD', 'int-oops-080': 'HARD',
+  'int-oops-081': 'HARD', 'int-oops-083': 'HARD', 'int-oops-085': 'HARD', 'int-oops-096': 'HARD',
+  'int-oops-097': 'HARD', 'int-oops-098': 'HARD', 'int-oops-099': 'HARD', 'int-oops-100': 'HARD',
+
+  // CN Easy (foundations: 12)
+  'int-cn-004': 'EASY', 'int-cn-012': 'EASY', 'int-cn-014': 'EASY', 'int-cn-017': 'EASY',
+  'int-cn-018': 'EASY', 'int-cn-022': 'EASY', 'int-cn-023': 'EASY', 'int-cn-024': 'EASY',
+  'int-cn-025': 'EASY', 'int-cn-033': 'EASY', 'int-cn-037': 'EASY', 'int-cn-048': 'EASY',
+
+  // HR Traps Easy (5)
+  'int-hr-traps-001': 'EASY', 'int-hr-traps-002': 'EASY', 'int-hr-traps-009': 'EASY',
+  'int-hr-traps-010': 'EASY', 'int-hr-traps-020': 'EASY',
+
+  // Project Viva Easy (6)
+  'int-proj-viva-003': 'EASY', 'int-proj-viva-007': 'EASY', 'int-proj-viva-008': 'EASY',
+  'int-proj-viva-009': 'EASY', 'int-proj-viva-010': 'EASY', 'int-proj-viva-022': 'EASY',
+};
+
+export const sortQuestionsProgressive = <T extends { difficulty?: 'EASY' | 'MEDIUM' | 'HARD'; sort_order?: number }>(
+  items: T[]
+): T[] => {
+  return [...items].sort((a, b) => {
+    const diffA = DIFFICULTY_WEIGHT[a.difficulty || 'MEDIUM'] ?? 2;
+    const diffB = DIFFICULTY_WEIGHT[b.difficulty || 'MEDIUM'] ?? 2;
+    if (diffA !== diffB) {
+      return diffA - diffB;
+    }
+    return (a.sort_order ?? 0) - (b.sort_order ?? 0);
+  });
+};
+
 const normalizeDbQuestion = (d: RawDbQuestion, masteredSet: Set<string>): InterviewQuestion => {
   const resolvedTopicId = d.topic_id || d.topicId;
   const resolvedSubjectLabel = d.subject_label || d.subjectLabel;
@@ -38,6 +118,9 @@ const normalizeDbQuestion = (d: RawDbQuestion, masteredSet: Set<string>): Interv
   const resolvedCompanyTags = Array.isArray(d.company_tags)
     ? (d.company_tags as string[])
     : (Array.isArray(d.companyTags) ? d.companyTags : []);
+
+  const rawDifficulty = (d.difficulty as 'EASY' | 'MEDIUM' | 'HARD') || 'MEDIUM';
+  const resolvedDifficulty = CANONICAL_DIFFICULTY_OVERRIDES[d.id] || rawDifficulty;
 
   return {
     id: d.id,
@@ -58,7 +141,7 @@ const normalizeDbQuestion = (d: RawDbQuestion, masteredSet: Set<string>): Interv
     companyTags: resolvedCompanyTags,
     company_tags: resolvedCompanyTags,
     frequency: (d.frequency as 'VERY_HIGH' | 'HIGH' | 'MEDIUM') || 'MEDIUM',
-    difficulty: (d.difficulty as 'EASY' | 'MEDIUM' | 'HARD') || 'MEDIUM',
+    difficulty: resolvedDifficulty,
     mastered: masteredSet.has(d.id),
     is_hidden: d.is_hidden || false,
     is_deleted: d.is_deleted || false,
@@ -352,7 +435,7 @@ export const interviewService = {
       }
 
       if (allData.length > 0) {
-        return allData.map(d => normalizeDbQuestion(d, masteredSet));
+        return sortQuestionsProgressive(allData.map(d => normalizeDbQuestion(d, masteredSet)));
       }
     } catch (e) {
       console.error('Failed to query interview_questions from Supabase:', e);
@@ -360,10 +443,8 @@ export const interviewService = {
 
     // Offline seed fallback for zero latency and offline resilience (lazy loaded)
     const seed = await getOfflineSeedQuestions();
-    return seed.map(q => ({
-      ...q,
-      mastered: masteredSet.has(q.id),
-    }));
+    const normalizedSeed = seed.map(q => normalizeDbQuestion(q as any, masteredSet));
+    return sortQuestionsProgressive(normalizedSeed);
   },
 
   async getQuestionsForTopic(topicId: string): Promise<InterviewQuestion[]> {
@@ -378,16 +459,16 @@ export const interviewService = {
         .order('created_at', { ascending: true });
 
       if (!error && data && data.length > 0) {
-        return data.map(d => normalizeDbQuestion(d, masteredSet));
+        return sortQuestionsProgressive(data.map(d => normalizeDbQuestion(d, masteredSet)));
       }
     } catch (e) {
       console.error('Failed to query questions for topic:', e);
     }
     const seed = await getOfflineSeedQuestions();
-    return seed.filter(q => q.topicId === topicId).map(q => ({
-      ...q,
-      mastered: masteredSet.has(q.id),
-    }));
+    const normalizedSeed = seed.map(q => normalizeDbQuestion(q as any, masteredSet));
+    return sortQuestionsProgressive(
+      normalizedSeed.filter(q => q.topicId === topicId || (q as any).topic_id === topicId)
+    );
   },
 
   async getQuestionsForCategory(category: InterviewCategory): Promise<InterviewQuestion[]> {
@@ -402,16 +483,16 @@ export const interviewService = {
         .order('created_at', { ascending: true });
 
       if (!error && data && data.length > 0) {
-        return data.map(d => normalizeDbQuestion(d, masteredSet));
+        return sortQuestionsProgressive(data.map(d => normalizeDbQuestion(d, masteredSet)));
       }
     } catch (e) {
       console.error('Failed to query questions for category:', category, e);
     }
     const seed = await getOfflineSeedQuestions();
-    return seed.filter(q => q.category === category).map(q => ({
-      ...q,
-      mastered: masteredSet.has(q.id),
-    }));
+    const normalizedSeed = seed.map(q => normalizeDbQuestion(q as any, masteredSet));
+    return sortQuestionsProgressive(
+      normalizedSeed.filter(q => q.category === category)
+    );
   },
 
   async getCoreCsQuestions(subject?: CoreCsSubject): Promise<InterviewQuestion[]> {
@@ -430,16 +511,16 @@ export const interviewService = {
 
       const { data, error } = await query;
       if (!error && data && data.length > 0) {
-        return data.map(d => normalizeDbQuestion(d, masteredSet));
+        return sortQuestionsProgressive(data.map(d => normalizeDbQuestion(d, masteredSet)));
       }
     } catch (e) {
       console.error('Failed to query Core CS questions:', e);
     }
     const seed = await getOfflineSeedQuestions();
-    return seed.filter(q => q.category === 'CORE_CS' && (!subject || q.subject === subject)).map(q => ({
-      ...q,
-      mastered: masteredSet.has(q.id),
-    }));
+    const normalizedSeed = seed.map(q => normalizeDbQuestion(q as any, masteredSet));
+    return sortQuestionsProgressive(
+      normalizedSeed.filter(q => q.category === 'CORE_CS' && (!subject || q.subject === subject))
+    );
   },
 
   async getHrQuestions(): Promise<InterviewQuestion[]> {
@@ -453,16 +534,16 @@ export const interviewService = {
         .order('sort_order', { ascending: true });
 
       if (!error && data && data.length > 0) {
-        return data.map(d => normalizeDbQuestion(d, masteredSet));
+        return sortQuestionsProgressive(data.map(d => normalizeDbQuestion(d, masteredSet)));
       }
     } catch (e) {
       console.error('Failed to query HR questions:', e);
     }
     const seed = await getOfflineSeedQuestions();
-    return seed.filter(q => q.category === 'HR_BEHAVIORAL').map(q => ({
-      ...q,
-      mastered: masteredSet.has(q.id),
-    }));
+    const normalizedSeed = seed.map(q => normalizeDbQuestion(q as any, masteredSet));
+    return sortQuestionsProgressive(
+      normalizedSeed.filter(q => q.category === 'HR_BEHAVIORAL')
+    );
   },
 
   async getProjectDefenseQuestions(): Promise<InterviewQuestion[]> {
@@ -476,16 +557,16 @@ export const interviewService = {
         .order('sort_order', { ascending: true });
 
       if (!error && data && data.length > 0) {
-        return data.map(d => normalizeDbQuestion(d, masteredSet));
+        return sortQuestionsProgressive(data.map(d => normalizeDbQuestion(d, masteredSet)));
       }
     } catch (e) {
       console.error('Failed to query Project Defense questions:', e);
     }
     const seed = await getOfflineSeedQuestions();
-    return seed.filter(q => q.category === 'PROJECT_DEFENSE').map(q => ({
-      ...q,
-      mastered: masteredSet.has(q.id),
-    }));
+    const normalizedSeed = seed.map(q => normalizeDbQuestion(q as any, masteredSet));
+    return sortQuestionsProgressive(
+      normalizedSeed.filter(q => q.category === 'PROJECT_DEFENSE')
+    );
   },
 
   async saveInterviewQuestion(q: Partial<InterviewQuestion>): Promise<{ success: boolean; error?: string }> {
