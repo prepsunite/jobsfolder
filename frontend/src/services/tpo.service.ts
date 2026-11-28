@@ -8038,6 +8038,9 @@ export const tpoService = {
     exam: MockExam;
     sections: Array<MockExamSection & { questions: any[] }>;
     isWindowLive?: boolean;
+    isAnswerSheetArchived?: boolean;
+    archivedAt?: string | null;
+    retentionDays?: number;
     examEndTime?: string;
   } | null> {
     if (!attemptId) return null;
@@ -8059,6 +8062,18 @@ export const tpoService = {
                 exam: json.exam,
                 sections: [],
                 isWindowLive: true,
+                examEndTime: json.examEndTime,
+              };
+            }
+            if (json.isAnswerSheetArchived) {
+              return {
+                attempt: json.attempt,
+                exam: json.exam,
+                sections: [],
+                isWindowLive: false,
+                isAnswerSheetArchived: true,
+                archivedAt: json.archivedAt || null,
+                retentionDays: json.retentionDays,
                 examEndTime: json.examEndTime,
               };
             }
@@ -8242,6 +8257,22 @@ export const tpoService = {
     // 2. Fetch the exam
     const exam = await this.getMockExamById(attempt.mock_exam_id);
     if (!exam) return null;
+
+    // 2b. Archived answer-sheet guard (after 30/90-day retention pruning)
+    if ((attempt.responses as any)?.__answer_sheet_pruned) {
+      const cidUpper = String(exam.college_id || attempt.college_id || '').trim().toUpperCase();
+      const isSelf = cidUpper === 'SELF' || cidUpper === 'INDIVIDUAL';
+      return {
+        attempt,
+        exam,
+        sections: [],
+        isWindowLive: false,
+        isAnswerSheetArchived: true,
+        archivedAt: (attempt.responses as any)?.__pruned_at || null,
+        retentionDays: Number((attempt.responses as any)?.__retention_days) || (isSelf ? 30 : 90),
+        examEndTime: exam.end_time,
+      };
+    }
 
     // 🔒 3. Anti-Leak Gate: Check live drive lock
     // Verified answer keys and solutions are strictly locked while peers are taking the exam.

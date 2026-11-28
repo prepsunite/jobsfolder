@@ -820,7 +820,18 @@ export default function StudentExamsPage() {
             const attempt = exam.attempt;
             const isFinished = isAttemptCompleted(attempt);
             const timingStatus = getExamTimingStatus(exam);
-            const isInProgress = attempt && attempt.status === 'IN_PROGRESS' && timingStatus === 'LIVE';
+            const isInProgressRaw = attempt && attempt.status === 'IN_PROGRESS' && timingStatus === 'LIVE';
+            const personalDeadlineMs = attempt?.server_deadline_at
+              ? new Date(attempt.server_deadline_at).getTime()
+              : (attempt?.responses as any)?.__server_meta?.server_deadline_at
+              ? new Date((attempt?.responses as any).__server_meta.server_deadline_at).getTime()
+              : attempt?.started_at
+              ? new Date(attempt.started_at).getTime() + (exam.duration_minutes || 90) * 60 * 1000
+              : null;
+            const isPersonalSessionExpired = Boolean(
+              isInProgressRaw && personalDeadlineMs && Number.isFinite(personalDeadlineMs) && Date.now() >= personalDeadlineMs
+            );
+            const isInProgress = Boolean(isInProgressRaw && !isPersonalSessionExpired);
             const isMalpractice = attempt && attempt.status === 'TERMINATED_MALPRACTICE';
             const isUpcoming = !isFinished && timingStatus === 'UPCOMING';
             const isConcluded = !isFinished && timingStatus === 'CONCLUDED';
@@ -955,6 +966,11 @@ export default function StudentExamsPage() {
                           <Lock className="w-3 h-3 text-rose-500" />
                           <span>Pass Inactive</span>
                         </span>
+                      ) : isPersonalSessionExpired ? (
+                        <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border border-rose-200 dark:border-rose-800 flex items-center gap-1.5 shadow-2xs">
+                          <Clock className="w-3 h-3 text-rose-500" />
+                          <span>Time Expired</span>
+                        </span>
                       ) : isInProgress ? (
                         <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200 dark:border-amber-800 flex items-center gap-1.5 animate-pulse shadow-2xs">
                           <Clock className="w-3 h-3 text-amber-500" />
@@ -1083,6 +1099,7 @@ export default function StudentExamsPage() {
                 {/* Bottom Action Footer */}
                 <div className="pt-4 border-t border-gray-100 dark:border-[#27292e] mt-4 space-y-2">
                   {isFinished && attempt ? (
+                    <>
                     <div className="flex items-center gap-2">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 flex-1">
                         <button
@@ -1093,7 +1110,16 @@ export default function StudentExamsPage() {
                           <Eye className="w-3.5 h-3.5 text-blue-500" />
                           <span>Scorecard</span>
                         </button>
-                        {canReviewSolutions(exam) ? (
+                        {(attempt.responses as any)?.__answer_sheet_pruned ? (
+                          <button
+                            onClick={() => setSelectedScorecardExam(exam)}
+                            className="w-full py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/70 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer"
+                            title="Detailed answer sheet archived after retention window; your scorecard is saved permanently"
+                          >
+                            <Clock className="w-3.5 h-3.5" />
+                            <span>Archived</span>
+                          </button>
+                        ) : canReviewSolutions(exam) ? (
                           <a
                             href={`/student/exams/attempt/${attempt.id}/answersheet`}
                             target="_blank"
@@ -1127,6 +1153,12 @@ export default function StudentExamsPage() {
                         </button>
                       )}
                     </div>
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400 text-center">
+                      {(attempt.responses as any)?.__answer_sheet_pruned
+                        ? 'Answer sheet archived after retention window · Scorecard saved permanently.'
+                        : `Detailed answer sheet & solutions retained for ${isStudentPracticeExam ? 30 : 90} days · Scorecard saved permanently.`}
+                    </p>
+                    </>
                   ) : isCampusPassInactive ? (
                     <button
                       disabled
@@ -1136,6 +1168,14 @@ export default function StudentExamsPage() {
                       <Lock className="w-3.5 h-3.5" />
                       <span>Campus Pass Inactive — Contact TPO</span>
                     </button>
+                  ) : isPersonalSessionExpired ? (
+                    <Link
+                      to={`/exam/${exam.id}`}
+                      className="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md shadow-rose-500/20"
+                    >
+                      <Award className="w-3.5 h-3.5" />
+                      <span>Finalize &amp; View Scorecard &rarr;</span>
+                    </Link>
                   ) : isInProgress ? (
                     <div className="flex items-center gap-2">
                       <Link

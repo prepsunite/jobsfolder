@@ -1255,10 +1255,27 @@ export default async function handler(req, res) {
         Boolean(effectiveEndMs) &&
         Date.now() < effectiveEndMs;
 
+      const isAnswerSheetArchived = Boolean(attRow.responses?.__answer_sheet_pruned);
+      const retentionDays = Number(attRow.responses?.__retention_days) || (isSelfPractice ? 30 : 90);
       const cleanAttempt = sanitizeAttemptForResponse(attRow);
       const cleanExam = examObj
         ? (await hydrateLockFlagsAndSanitizeExams([examObj], isPrivileged ? new Set([examObj.id]) : new Set()))[0]
         : null;
+
+      if (isAnswerSheetArchived) {
+        return res.status(200).json({
+          success: true,
+          isWindowLive: false,
+          isAnswerSheetArchived: true,
+          archivedAt: attRow.responses?.__pruned_at || null,
+          retentionDays,
+          examEndTime: effectiveEndMs ? new Date(effectiveEndMs).toISOString() : null,
+          serverNowMs: Date.now(),
+          attempt: cleanAttempt,
+          exam: cleanExam,
+          questions: [],
+        });
+      }
 
       if (isWindowLive) {
         return res.status(200).json({
@@ -1711,6 +1728,401 @@ export default async function handler(req, res) {
         });
       }
 
+      const computeAttemptDeadlineMs = (dbAttempt, examObj) => {
+        const startedMs = new Date(dbAttempt?.started_at || Date.now()).getTime();
+        const durationMs = Math.max(1, Number(examObj?.duration_minutes || 90)) * 60 * 1000;
+        const examEndMs = examObj?.end_time ? new Date(examObj.end_time).getTime() : Infinity;
+        if (dbAttempt?.server_deadline_at) {
+          const dl = new Date(dbAttempt.server_deadline_at).getTime();
+          if (Number.isFinite(dl) && dl > 0) return dl;
+        }
+        if (dbAttempt?.responses?.__server_meta?.server_deadline_at) {
+          const dl = new Date(dbAttempt.responses.__server_meta.server_deadline_at).getTime();
+          if (Number.isFinite(dl) && dl > 0) return dl;
+        }
+        return Math.min(startedMs + durationMs, Number.isFinite(examEndMs) ? examEndMs : Infinity);
+      };
+
+      const finalizeAndGradeAttempt = async ({
+        dbAttempt,
+        examObj,
+        clientResponses = {},
+        statusOverride,
+        proctorEvents = [],
+        tabSwitchCount = 0,
+      }) => {
+        const nowMs = Date.now();
+        const startedMs = new Date(dbAttempt.started_at || nowMs).getTime();
+        const actualElapsedSec = Math.max(0, Math.floor((nowMs - startedMs) / 1000));
+        const deadlineMs = computeAttemptDeadlineMs(dbAttempt, examObj);
+
+        const incomingEvents = Array.isArray(proctorEvents) ? proctorEvents : [];
+        const existingEvents = Array.isArray(dbAttempt.proctor_events) ? dbAttempt.proctor_events : [];
+        const mergedEvents = incomingEvents.length >= existingEvents.length ? incomingEvents : existingEvents;
+        const effectiveTabSwitches = Math.max(
+          Number(tabSwitchCount || 0),
+          Number(dbAttempt.tab_switch_count || 0),
+          mergedEvents.length
+        );
+
+        let finalStatus = 'SUBMITTED';
+        if (!isSuperAdmin && nowMs >= deadlineMs) {
+          finalStatus = 'TIMED_OUT';
+        } else if (
+          statusOverride === 'TERMINATED_MALPRACTICE' ||
+          (examObj.enable_tab_switch_detection !== false &&
+            effectiveTabSwitches >= Number(examObj.max_tab_switches_allowed || 3))
+        ) {
+          finalStatus = 'TERMINATED_MALPRACTICE';
+        } else if (statusOverride === 'TIMED_OUT') {
+          finalStatus = 'TIMED_OUT';
+        } else if (isSuperAdmin && ['SUBMITTED', 'GRADED', 'TIMED_OUT', 'TERMINATED_MALPRACTICE'].includes(statusOverride)) {
+          finalStatus = statusOverride;
+        }
+
+        const serverAssigned =
+          Array.isArray(dbAttempt.assigned_question_ids) && dbAttempt.assigned_question_ids.length > 0
+            ? dbAttempt.assigned_question_ids
+            : Array.isArray(dbAttempt.responses?.__server_meta?.assigned_question_ids) &&
+                dbAttempt.responses.__server_meta.assigned_question_ids.length > 0
+              ? dbAttempt.responses.__server_meta.assigned_question_ids
+              : null;
+        const assignedSet = serverAssigned ? new Set(serverAssigned) : null;
+
+        const baseResponses = dbAttempt.responses && typeof dbAttempt.responses === 'object' ? dbAttempt.responses : {};
+        const mergedClientResponses = {
+          ...baseResponses,
+          ...(clientResponses && typeof clientResponses === 'object' ? clientResponses : {}),
+        };
+
+        const examSections = Array.isArray(examObj.sections) ? examObj.sections : [];
+        const allQIds = Array.from(
+          new Set(
+            examSections.flatMap((sec) => {
+              const pool = Array.isArray(sec.question_ids) ? sec.question_ids : [];
+              if (assignedSet) return pool.filter((id) => assignedSet.has(id));
+              const serveCap = Number(sec.serve_count || sec.question_count || pool.length) || pool.length;
+              return pool.slice(0, serveCap);
+            })
+          )
+        );
+
+        const tqCorrectMap = new Map();
+        const tmCorrectMap = new Map();
+        const codingProblemSet = new Set();
+
+        const UUID_RE_GRADE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        for (let i = 0; i < allQIds.length; i += 200) {
+          const slice = allQIds.slice(i, i + 200);
+          const uuidSlice = slice.filter((id) => UUID_RE_GRADE.test(String(id)));
+          const [tqRes, tmRes, tpRes] = await Promise.all([
+            uuidSlice.length > 0
+              ? supabaseService.from('topic_questions').select('id, correct_answer').in('id', uuidSlice)
+              : Promise.resolve({ data: [] }),
+            supabaseService.from('technical_mcqs').select('id, correct_option_index').in('id', slice),
+            supabaseService.from('technical_problems').select('id').in('id', slice),
+          ]);
+          for (const row of tqRes.data || []) tqCorrectMap.set(row.id, parseCorrectAnswerIndex(row.correct_answer));
+          for (const row of tmRes.data || []) tmCorrectMap.set(row.id, parseCorrectAnswerIndex(row.correct_option_index));
+          for (const row of tpRes.data || []) codingProblemSet.add(row.id);
+        }
+
+        const ownerEmail = (dbAttempt.student_email || userEmail).toLowerCase();
+        const gradedResponses = {};
+        const sectionsSummary = [];
+        let totalScore = 0;
+        let maxPossibleScore = 0;
+        let totalQuestions = 0;
+        let totalAttempted = 0;
+        let totalCorrect = 0;
+        let totalIncorrect = 0;
+
+        for (const sec of examSections) {
+          const marksPerQ = Number(sec.marks_per_correct ?? 1);
+          const negMark = Number(sec.negative_marking ?? 0);
+          const pool = Array.isArray(sec.question_ids) ? sec.question_ids : [];
+          const serveCap = Number(sec.serve_count || sec.question_count || pool.length) || pool.length;
+          const secQids = assignedSet ? pool.filter((id) => assignedSet.has(id)) : pool.slice(0, serveCap);
+
+          let secAttempted = 0;
+          let secCorrect = 0;
+          let secIncorrect = 0;
+          let secScore = 0;
+          let secMax = 0;
+
+          for (const qId of secQids) {
+            secMax += marksPerQ;
+            maxPossibleScore += marksPerQ;
+            totalQuestions += 1;
+
+            const resp = mergedClientResponses[qId];
+            const markedReview = Boolean(resp?.marked_for_review ?? resp?.marked_review);
+            const timeSpent = Math.max(0, Number(resp?.time_spent_seconds ?? resp?.time_spent_sec ?? 0));
+
+            const isCoding =
+              sec.section_type === 'CODING' ||
+              sec.category === 'coding' ||
+              codingProblemSet.has(qId) ||
+              qId.startsWith('lc-') ||
+              qId.startsWith('p150-') ||
+              qId.startsWith('custom-');
+
+            if (isCoding) {
+              const codeSol = typeof resp?.code_solution === 'string' ? resp.code_solution : '';
+              if (codeSol.trim()) {
+                secAttempted += 1;
+                totalAttempted += 1;
+
+                let verifiedPassed = 0;
+                let verifiedTotal = 1;
+                const langKey = String(resp?.code_language || 'python').toLowerCase();
+
+                const tokenCheck = verifyCodingVerdict(resp?.verdictToken, {
+                  attemptId: dbAttempt.id,
+                  problemId: qId,
+                  sourceCode: codeSol,
+                  userEmail: ownerEmail,
+                });
+
+                if (tokenCheck.valid) {
+                  verifiedPassed = tokenCheck.passedCount;
+                  verifiedTotal = tokenCheck.totalCount;
+                } else {
+                  const { data: subRow } = await supabaseAdmin
+                    .from('user_technical_submissions')
+                    .select('passed_cases, total_cases')
+                    .ilike('user_email', ownerEmail)
+                    .eq('problem_id', qId)
+                    .eq('source_code', codeSol)
+                    .gte('created_at', dbAttempt.started_at || new Date(Date.now() - 6 * 3600 * 1000).toISOString())
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .maybeSingle();
+
+                  if (subRow) {
+                    verifiedPassed = Math.max(0, Number(subRow.passed_cases || 0));
+                    verifiedTotal = Math.max(1, Number(subRow.total_cases || 1));
+                  } else {
+                    try {
+                      const execRes = await executeProblemAgainstDb({
+                        supabaseAdmin,
+                        problemId: qId,
+                        language: langKey,
+                        sourceCode: codeSol,
+                        userEmail: ownerEmail,
+                        attemptId: dbAttempt.id,
+                        examMode: true,
+                        isSubmit: true,
+                      });
+                      verifiedPassed = Math.max(0, Number(execRes?.passedCount || 0));
+                      verifiedTotal = Math.max(1, Number(execRes?.totalCount || 1));
+                    } catch {
+                      verifiedPassed = 0;
+                      verifiedTotal = 1;
+                    }
+                  }
+                }
+
+                const isAllPassed = verifiedTotal > 0 && verifiedPassed === verifiedTotal;
+                const earned = isAllPassed
+                  ? marksPerQ
+                  : Math.round((verifiedPassed / Math.max(1, verifiedTotal)) * marksPerQ * 100) / 100;
+
+                if (isAllPassed) {
+                  secCorrect += 1;
+                  totalCorrect += 1;
+                } else {
+                  secIncorrect += 1;
+                  totalIncorrect += 1;
+                }
+                secScore += earned;
+
+                gradedResponses[qId] = {
+                  question_id: qId,
+                  code_solution: codeSol,
+                  code_language: langKey,
+                  test_cases_passed: verifiedPassed,
+                  total_test_cases: verifiedTotal,
+                  is_correct: isAllPassed,
+                  marks_earned: earned,
+                  marked_for_review: markedReview,
+                  time_spent_seconds: timeSpent,
+                };
+              } else {
+                gradedResponses[qId] = {
+                  question_id: qId,
+                  marked_for_review: markedReview,
+                  time_spent_seconds: timeSpent,
+                  is_correct: false,
+                  marks_earned: 0,
+                };
+              }
+            } else {
+              const chosen = resp?.selected_option;
+              const isAnswered = chosen !== null && chosen !== undefined && chosen !== '';
+              const expectedIdx = tqCorrectMap.has(qId)
+                ? tqCorrectMap.get(qId)
+                : tmCorrectMap.has(qId)
+                  ? tmCorrectMap.get(qId)
+                  : -1;
+
+              if (isAnswered) {
+                secAttempted += 1;
+                totalAttempted += 1;
+                const chosenNum = Number(chosen);
+                const isCorrect = expectedIdx >= 0 && chosenNum === expectedIdx;
+                const earned = isCorrect ? marksPerQ : negMark > 0 ? -Math.abs(negMark) : 0;
+                if (isCorrect) {
+                  secCorrect += 1;
+                  totalCorrect += 1;
+                } else {
+                  secIncorrect += 1;
+                  totalIncorrect += 1;
+                }
+                secScore += earned;
+                gradedResponses[qId] = {
+                  question_id: qId,
+                  selected_option: chosenNum,
+                  is_correct: isCorrect,
+                  marks_earned: earned,
+                  marked_for_review: markedReview,
+                  time_spent_seconds: timeSpent,
+                };
+              } else {
+                gradedResponses[qId] = {
+                  question_id: qId,
+                  selected_option: null,
+                  is_correct: false,
+                  marks_earned: 0,
+                  marked_for_review: markedReview,
+                  time_spent_seconds: timeSpent,
+                };
+              }
+            }
+          }
+
+          const clampedSecScore = Math.max(0, Math.round(secScore * 100) / 100);
+          totalScore += clampedSecScore;
+          sectionsSummary.push({
+            section_id: sec.id || `sec-${sec.section_order}`,
+            section_name: sec.name,
+            total_questions: secQids.length,
+            attempted: secAttempted,
+            correct: secCorrect,
+            incorrect: secIncorrect,
+            unattempted: Math.max(0, secQids.length - secAttempted),
+            score: clampedSecScore,
+            max_score: secMax,
+            percentage: secMax > 0 ? Math.round((clampedSecScore / secMax) * 1000) / 10 : 0,
+            accuracy: secAttempted > 0 ? Math.round((secCorrect / secAttempted) * 1000) / 10 : 0,
+          });
+        }
+
+        totalScore = Math.round(totalScore * 100) / 100;
+        const finalMaxScore = maxPossibleScore > 0 ? maxPossibleScore : Number(examObj.total_marks || 100);
+        const percentage = maxPossibleScore > 0 ? Math.round((totalScore / maxPossibleScore) * 10000) / 100 : 0;
+        const passed = finalStatus !== 'TERMINATED_MALPRACTICE' && percentage >= Number(examObj.passing_percentage ?? 40);
+        const tier =
+          finalStatus === 'TERMINATED_MALPRACTICE'
+            ? 'MALPRACTICE'
+            : percentage >= 70
+              ? 'TIER_1'
+              : percentage >= 50
+                ? 'TIER_2'
+                : 'TIER_3';
+        const tierLabel =
+          tier === 'MALPRACTICE'
+            ? 'Disqualified (Proctor Violation)'
+            : tier === 'TIER_1'
+              ? 'Tier-1 Industry Ready'
+              : tier === 'TIER_2'
+                ? 'Tier-2 Campus Ready'
+                : 'Tier-3 Needs Upskilling';
+
+        const resultSummary = {
+          total_score: totalScore,
+          max_score: finalMaxScore,
+          percentage,
+          passed,
+          tier,
+          tier_label: tierLabel,
+          total_questions: totalQuestions,
+          total_attempted: totalAttempted,
+          total_correct: totalCorrect,
+          total_incorrect: totalIncorrect,
+          total_unattempted: Math.max(0, totalQuestions - totalAttempted),
+          overall_accuracy: totalAttempted > 0 ? Math.round((totalCorrect / totalAttempted) * 1000) / 10 : 0,
+          time_spent_seconds: actualElapsedSec,
+          tab_switch_count: effectiveTabSwitches,
+          proctor_status:
+            finalStatus === 'TERMINATED_MALPRACTICE'
+              ? 'MALPRACTICE_TERMINATED'
+              : effectiveTabSwitches > 0
+                ? 'WARNING'
+                : 'CLEAN',
+          sections: sectionsSummary,
+        };
+
+        const persistedResponses = {
+          ...gradedResponses,
+          __result_summary: resultSummary,
+          ...(dbAttempt.responses?.__server_meta ? { __server_meta: dbAttempt.responses.__server_meta } : {}),
+        };
+
+        const updatePayload = {
+          status: finalStatus,
+          total_score: totalScore,
+          max_possible_score: finalMaxScore,
+          percentage,
+          passed,
+          tab_switch_count: effectiveTabSwitches,
+          proctor_events: mergedEvents,
+          time_spent_seconds: actualElapsedSec,
+          responses: persistedResponses,
+          submitted_at: new Date(nowMs).toISOString(),
+          updated_at: new Date(nowMs).toISOString(),
+        };
+
+        let savedAttempt = null;
+        const { data: savedFull, error: errFull } = await supabaseService
+          .from('student_exam_attempts')
+          .update({ ...updatePayload, result_summary: resultSummary })
+          .eq('id', dbAttempt.id)
+          .select()
+          .maybeSingle();
+
+        if (!errFull && savedFull) {
+          savedAttempt = savedFull;
+        } else {
+          const { data: savedCompat, error: errCompat } = await supabaseService
+            .from('student_exam_attempts')
+            .update(updatePayload)
+            .eq('id', dbAttempt.id)
+            .select()
+            .maybeSingle();
+          if (errCompat || !savedCompat) {
+            throw new Error(errCompat?.message || errFull?.message || 'Failed to persist exam submission to database.');
+          }
+          savedAttempt = savedCompat;
+        }
+
+        try {
+          await supabaseService
+            .from('student_exam_attempts')
+            .update({
+              status: finalStatus,
+              submitted_at: updatePayload.submitted_at,
+              updated_at: updatePayload.updated_at,
+            })
+            .eq('mock_exam_id', examObj.id)
+            .eq('status', 'IN_PROGRESS')
+            .neq('id', dbAttempt.id)
+            .or(`student_id.eq.${dbAttempt.student_id},student_email.eq.${userEmail}`);
+        } catch {}
+
+        return sanitizeAttemptForResponse(savedAttempt);
+      };
+
       // Action 0g: Authoritative Candidate Start or Resume Exam Attempt
       if (action === 'start-attempt') {
         const targetExamId = req.body?.examId || attempt?.mock_exam_id;
@@ -1750,7 +2162,21 @@ export default async function handler(req, res) {
           : null;
 
         if (existingAttempt) {
-          const cleanExisting = sanitizeAttemptForResponse(existingAttempt);
+          let resolvedExisting = existingAttempt;
+          let isAlreadyDone = FINALIZED_STATUSES.includes(existingAttempt.status);
+          if (!isAlreadyDone) {
+            const dlMs = computeAttemptDeadlineMs(existingAttempt, targetExam);
+            if (Date.now() >= dlMs) {
+              resolvedExisting = await finalizeAndGradeAttempt({
+                dbAttempt: existingAttempt,
+                examObj: targetExam,
+                clientResponses: existingAttempt.responses || {},
+                statusOverride: 'TIMED_OUT',
+              });
+              isAlreadyDone = true;
+            }
+          }
+          const cleanExisting = isAlreadyDone ? resolvedExisting : sanitizeAttemptForResponse(resolvedExisting);
           const questions = await loadExamQuestionsFromDb(targetExam, {
             includeSolutions: false,
             allowedIds: cleanExisting.assigned_question_ids || null,
@@ -1760,7 +2186,7 @@ export default async function handler(req, res) {
             attempt: cleanExisting,
             questions,
             serverNowMs: Date.now(),
-            alreadyFinalized: FINALIZED_STATUSES.includes(existingAttempt.status),
+            alreadyFinalized: isAlreadyDone,
           });
         }
 
@@ -1926,14 +2352,7 @@ export default async function handler(req, res) {
 
         const targetExam = await loadExamWithSections(dbAttempt.mock_exam_id);
         const startedMs = new Date(dbAttempt.started_at || Date.now()).getTime();
-        const durationMs = Math.max(1, Number(targetExam?.duration_minutes || 90)) * 60 * 1000;
-        const endMs = targetExam?.end_time ? new Date(targetExam.end_time).getTime() : Infinity;
-        const deadlineMs = dbAttempt.server_deadline_at
-          ? new Date(dbAttempt.server_deadline_at).getTime()
-          : dbAttempt.responses?.__server_meta?.server_deadline_at
-            ? new Date(dbAttempt.responses.__server_meta.server_deadline_at).getTime()
-            : Math.min(startedMs + durationMs, Number.isFinite(endMs) ? endMs : Infinity);
-
+        const deadlineMs = computeAttemptDeadlineMs(dbAttempt, targetExam);
         const nowMs = Date.now();
         const elapsedSec = Math.max(0, Math.floor((nowMs - startedMs) / 1000));
         const incomingResponses =
@@ -1975,6 +2394,29 @@ export default async function handler(req, res) {
         const maxAllowedTabs = Number(targetExam?.max_tab_switches_allowed ?? 3);
         const tabLimitExceeded =
           targetExam?.enable_tab_switch_detection !== false && finalTabSwitches >= maxAllowedTabs;
+        const isExpired = nowMs >= deadlineMs;
+
+        if ((isExpired || tabLimitExceeded) && targetExam) {
+          const finalizedAttempt = await finalizeAndGradeAttempt({
+            dbAttempt: { ...dbAttempt, ...patch },
+            examObj: targetExam,
+            clientResponses: mergedResponses,
+            statusOverride: tabLimitExceeded ? 'TERMINATED_MALPRACTICE' : 'TIMED_OUT',
+            proctorEvents: finalEvents,
+            tabSwitchCount: finalTabSwitches,
+          });
+          return res.status(200).json({
+            success: true,
+            status: finalizedAttempt.status,
+            finalized: true,
+            attempt: finalizedAttempt,
+            serverNowMs: nowMs,
+            serverDeadlineMs: deadlineMs,
+            remainingSeconds: 0,
+            expired: isExpired,
+            terminated: tabLimitExceeded,
+          });
+        }
 
         return res.status(200).json({
           success: true,
@@ -1982,7 +2424,7 @@ export default async function handler(req, res) {
           serverNowMs: nowMs,
           serverDeadlineMs: deadlineMs,
           remainingSeconds: Math.max(0, Math.ceil((deadlineMs - nowMs) / 1000)),
-          expired: nowMs > deadlineMs + 120_000,
+          expired: isExpired,
           terminated: tabLimitExceeded,
         });
       }

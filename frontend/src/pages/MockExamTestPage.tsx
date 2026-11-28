@@ -562,6 +562,7 @@ export default function MockExamTestPage() {
   const lastViolationTimeRef = useRef<number>(0);
   const startedAtMsRef = useRef<number>(0);
   const serverDeadlineMsRef = useRef<number>(0);
+  const autoExpiredTriggeredRef = useRef<boolean>(false);
   const perfStartMsRef = useRef<number>(0);
   const initialElapsedSecRef = useRef<number>(0);
   const [showWarningModal, setShowWarningModal] = useState<boolean>(false);
@@ -651,8 +652,11 @@ export default function MockExamTestPage() {
       if (Array.isArray(restoredAssigned) && restoredAssigned.length > 0) {
         setServerAssignedIds(restoredAssigned);
       }
-      if (existingAttempt.server_deadline_at) {
-        const dl = new Date(existingAttempt.server_deadline_at).getTime();
+      const rawServerDeadline =
+        existingAttempt.server_deadline_at ||
+        (existingAttempt.responses as any)?.__server_meta?.server_deadline_at;
+      if (rawServerDeadline) {
+        const dl = new Date(rawServerDeadline).getTime();
         if (Number.isFinite(dl) && dl > 0) serverDeadlineMsRef.current = dl;
       }
 
@@ -1298,6 +1302,21 @@ export default function MockExamTestPage() {
   const handleFinalSubmitRef = useRef(handleFinalSubmit);
   handleFinalSubmitRef.current = handleFinalSubmit;
 
+  // Auto-finalize an IN_PROGRESS attempt if its personal countdown expired while the student was away
+  useEffect(() => {
+    if (
+      testPhase === 'INSTRUCTIONS' &&
+      existingAttempt?.status === 'IN_PROGRESS' &&
+      timeRemainingSeconds <= 0 &&
+      (serverDeadlineMsRef.current > 0 || existingAttempt.started_at) &&
+      !autoExpiredTriggeredRef.current
+    ) {
+      autoExpiredTriggeredRef.current = true;
+      toast.info('Your assessment countdown has ended. Finalizing your scorecard...');
+      handleFinalSubmitRef.current('TIMED_OUT');
+    }
+  }, [testPhase, existingAttempt?.status, existingAttempt?.started_at, timeRemainingSeconds]);
+
 
   // 4. Timer Countdown & Auto-Sync Hook (Strict Monotonic Server Clock & Server Deadline Anchored)
   useEffect(() => {
@@ -1390,14 +1409,23 @@ export default function MockExamTestPage() {
           if (hb.serverDeadlineMs && hb.serverDeadlineMs > 0) {
             serverDeadlineMsRef.current = hb.serverDeadlineMs;
           }
-          if (hb.expired) {
-            handleFinalSubmit('TIMED_OUT');
-          } else if (hb.terminated) {
-            handleFinalSubmit('TERMINATED_MALPRACTICE');
-          } else if ((hb as { finalized?: boolean }).finalized) {
+          const hbData = hb as {
+            finalized?: boolean;
+            attempt?: StudentExamAttempt;
+            expired?: boolean;
+            terminated?: boolean;
+          };
+          if (hbData.finalized) {
+            if (hbData.attempt) {
+              setFinalGradedAttempt(hbData.attempt);
+            }
             queryClient.invalidateQueries({ queryKey: ['candidate-existing-attempt', exam?.id] });
             queryClient.invalidateQueries({ queryKey: ['student-campus-mock-exams'] });
             setTestPhase('SUBMITTED');
+          } else if (hbData.expired) {
+            handleFinalSubmit('TIMED_OUT');
+          } else if (hbData.terminated) {
+            handleFinalSubmit('TERMINATED_MALPRACTICE');
           }
         }
       }

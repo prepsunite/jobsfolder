@@ -53,6 +53,9 @@ export default function StudentAnswerSheetPage() {
     exam: MockExam;
     sections: Array<MockExamSection & { questions: any[] }>;
     isWindowLive?: boolean;
+    isAnswerSheetArchived?: boolean;
+    archivedAt?: string | null;
+    retentionDays?: number;
     examEndTime?: string;
   } | null>(null);
 
@@ -250,6 +253,80 @@ export default function StudentAnswerSheetPage() {
     );
   }
 
+  // Retention Guard: Answer sheet details pruned after 30/90 days while Scorecard stays permanent
+  if (data?.isAnswerSheetArchived && attempt && exam) {
+    const retentionDays =
+      data.retentionDays ||
+      (['SELF', 'INDIVIDUAL'].includes(String(exam.college_id || attempt.college_id || '').trim().toUpperCase()) ? 30 : 90);
+    const summarySections = attempt.result_summary?.sections || [];
+
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-[#0b0f19] flex items-center justify-center p-4">
+        <div className="max-w-lg w-full bg-white dark:bg-[#111827] rounded-3xl border border-slate-200 dark:border-slate-800 p-8 shadow-xl text-center space-y-6">
+          <div className="w-16 h-16 rounded-3xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center mx-auto">
+            <Clock className="w-8 h-8" />
+          </div>
+          <div className="space-y-2">
+            <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+              Retention Policy &bull; Archived After {retentionDays} Days
+            </span>
+            <h2 className="text-xl font-black text-slate-900 dark:text-white">
+              Answer Sheet Expired &mdash; View Scorecard
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              Detailed question-by-question responses and solutions for <strong className="text-slate-800 dark:text-slate-200">{exam.title}</strong> are retained for {retentionDays} days. Your official scorecard and section summary are saved permanently.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs space-y-3 text-left">
+            <div className="flex justify-between items-center">
+              <div>
+                <span className="text-slate-400 block text-[10px] uppercase font-bold">Your Score</span>
+                <strong className="text-slate-900 dark:text-white text-base font-mono">
+                  {attempt.total_score} / {attempt.max_possible_score || exam.total_marks || 100}
+                </strong>
+              </div>
+              <div className="text-right">
+                <span className="text-slate-400 block text-[10px] uppercase font-bold">Percentage</span>
+                <strong className="text-emerald-600 dark:text-emerald-400 text-base font-mono">
+                  {attempt.percentage}%
+                </strong>
+              </div>
+            </div>
+
+            {summarySections.length > 0 && (
+              <div className="pt-2 border-t border-slate-200 dark:border-slate-700 space-y-1.5">
+                {summarySections.map((sec, idx) => (
+                  <div key={sec.section_id || idx} className="flex items-center justify-between text-[11px]">
+                    <span className="text-slate-600 dark:text-slate-300 truncate pr-2">{sec.section_name}</span>
+                    <span className="font-mono font-bold text-slate-800 dark:text-slate-200 shrink-0">
+                      {sec.score} / {sec.max_score} ({sec.correct}/{sec.total_questions})
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={() => navigate('/student/exams')}
+              className="flex-1 py-3 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-black text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-opacity cursor-pointer"
+            >
+              Return to Exams Portal
+            </button>
+            <button
+              onClick={() => window.close()}
+              className="py-3 px-4 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold uppercase tracking-wider hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+            >
+              Close Tab
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!attempt || !exam) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-[#0b0f19] flex items-center justify-center p-4">
@@ -350,6 +427,20 @@ export default function StudentAnswerSheetPage() {
             <div><strong>Department:</strong> {department}</div>
             <div><strong>Total Marks:</strong> {attempt.total_score} / {attempt.max_possible_score || exam.total_marks} ({attempt.percentage}%)</div>
           </div>
+        </div>
+
+        {/* ── RETENTION NOTICE BANNER ── */}
+        <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-slate-100/80 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/60 text-xs text-slate-600 dark:text-slate-300 print:hidden">
+          <Clock className="w-4 h-4 text-slate-400 shrink-0" />
+          <span>
+            Detailed answer sheet &amp; solutions are retained for{' '}
+            <strong>
+              {['SELF', 'INDIVIDUAL'].includes(String(exam.college_id || attempt.college_id || '').trim().toUpperCase())
+                ? '30 days'
+                : '90 days'}
+            </strong>
+            ; your scorecard is saved permanently.
+          </span>
         </div>
 
         {/* ── CANDIDATE HERO SCORECARD ── */}
