@@ -385,6 +385,12 @@ export default function StudentExamsPage() {
             </Link>
           )}
 
+          {usageInfo && usageInfo.limit > 0 && (
+            <div className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-[#191a1e] border border-slate-200 dark:border-[#27292e] text-slate-700 dark:text-slate-200 text-xs font-mono font-bold shadow-2xs">
+              {usageInfo.remaining} of {usageInfo.limit} remaining
+            </div>
+          )}
+
           {isAdmin && (
             <button
               onClick={() => setIsCreatePublicModalOpen(true)}
@@ -415,7 +421,7 @@ export default function StudentExamsPage() {
       </div>
 
       {/* ── INSTITUTIONAL ENROLLMENT & KPI INTELLIGENCE CARD ── */}
-      {enrolledCollege ? (
+      {enrolledCollege && (
         <div className="rounded-3xl p-6 sm:p-7 border border-[#FD4A32]/30 dark:border-[#FD4A32]/25 bg-gradient-to-br from-orange-50/50 via-white to-orange-50/15 dark:from-[#1a1311] dark:via-[#141517] dark:to-[#121316] shadow-sm relative overflow-hidden space-y-6">
           {/* Compact Collapsible Header Row */}
           <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
@@ -584,49 +590,6 @@ export default function StudentExamsPage() {
               </div>
             </div>
           )}
-        </div>
-      ) : (
-        <div className="rounded-2xl p-6 border border-gray-200 dark:border-[#27292e] bg-linear-to-br from-gray-50/70 via-white to-orange-50/20 dark:from-[#141517] dark:via-[#17181c] dark:to-[#1a1413] flex flex-col md:flex-row items-center justify-between gap-6 shadow-xs">
-          <div className="flex items-start sm:items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-[#FD4A32]/10 text-[#FD4A32] flex items-center justify-center font-bold shrink-0 mt-1 sm:mt-0">
-              <Sparkles className="w-6 h-6" />
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-                  Blueprint Mock Exam Suite
-                </h3>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FD4A32]/10 text-[#FD4A32] uppercase tracking-wider">
-                  {usageInfo?.planName || 'Free Plan'}
-                </span>
-                {usageInfo && (
-                  <span className="text-xs font-mono text-emerald-600 dark:text-emerald-400 font-bold">
-                    {usageInfo.remaining} of {usageInfo.limit} mock exams remaining
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 max-w-xl">
-                Choose an official company blueprint pattern like <strong>TCS NQT (90 min)</strong> or <strong>Accenture ASE (90 min)</strong> to generate your custom-scheduled mock test with proctored anti-cheat and instant in-depth solutions.
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 shrink-0 flex-wrap">
-            <button
-              onClick={() => setIsGenerateModalOpen(true)}
-              className="px-4 py-2.5 rounded-xl bg-[#FD4A32] text-white text-xs font-bold uppercase tracking-wider hover:bg-[#e03f29] transition-all shadow-md shadow-[#FD4A32]/20 flex items-center gap-1.5 cursor-pointer"
-            >
-              <Sparkles className="w-4 h-4" />
-              <span>Generate Blueprint Exam</span>
-            </button>
-            {usageInfo?.limit === 0 && (
-              <Link
-                to="/pricing"
-                className="px-4 py-2.5 rounded-xl border border-gray-300 dark:border-[#33363f] text-gray-700 dark:text-gray-300 text-xs font-bold uppercase tracking-wider hover:bg-gray-100 dark:hover:bg-[#202226] transition-all"
-              >
-                Upgrade to Pro (₹129) →
-              </Link>
-            )}
-          </div>
         </div>
       )}
 
