@@ -5,6 +5,7 @@ import { AMAZON_QUESTIONS } from './data_amazon.mjs';
 import { GOOGLE_QUESTIONS } from './data_google.mjs';
 import { CP_BANK_PART2 } from './cp_bank_part2.mjs';
 import { CP_BANK_PART3 } from './cp_bank_part3.mjs';
+import { CP_BANK_PART4 } from './cp_bank_part4.mjs';
 
 for (const line of fs.readFileSync('.env', 'utf8').split(/\r?\n/)) {
   const m = line.match(/^\s*([^#=]+?)\s*=\s*(.*)\s*$/);
@@ -103,13 +104,42 @@ function cleanProblem(q, idx) {
   };
 }
 
-// Replace the 2 lighter problems in Google with stronger CP ones from Part 2/3
+const EXCLUDE_LIGHT = new Set([
+  'maxQualityWindow',
+  'minMaxLoadPerServer',
+  'minDispatchTime',
+  'uniqueRobotRoutes',
+  'countSubarraysWithKDistinct',
+  'largestRectangleArea',
+  'sumSubarrayRanges',
+  'trapWarehouseWater',
+  'countSmallerAfter',
+  'canSplitConsecutiveBatches',
+  'minAmplitudeThreeChanges',
+  'countGoodDocumentSplits',
+  'longestCommonSubseq',
+  'minMeetingRoomsRequired',
+  'subarraysExactKDistinct',
+  'minPriorityTokens',
+  'maxPodsScheduled',
+  'mergeComputeIntervals',
+  'maxKnapsackValue',
+  'longestIncSubseq',
+  'countArrayInversions',
+  'maxSubarrayOneDeletion',
+  'minCostMakeEqualWeighted',
+  'firstMissingPositiveInt',
+  'longestValidParens',
+  'findMedianSortedArrays',
+]);
+
 const rawPool = [
   ...AMAZON_QUESTIONS,
-  ...GOOGLE_QUESTIONS.filter(q => q.fnName !== 'maxPodsScheduled' && q.fnName !== 'mergeComputeIntervals'),
+  ...GOOGLE_QUESTIONS,
   ...CP_BANK_PART2,
   ...CP_BANK_PART3,
-];
+  ...CP_BANK_PART4,
+].filter(q => !EXCLUDE_LIGHT.has(q.fnName));
 
 const MASTER_CP_POOL = rawPool.map(cleanProblem);
 console.log(`Master CP Bank size: ${MASTER_CP_POOL.length} unique Hard/Extreme problems.`);
