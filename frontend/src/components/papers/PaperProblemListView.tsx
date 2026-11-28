@@ -95,6 +95,8 @@ export default function PaperProblemListView({
                     className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded uppercase tracking-wider ${
                       question.difficulty === 'BASIC'
                         ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                        : question.difficulty === 'EXTREME'
+                        ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/30'
                         : question.difficulty === 'HARD'
                         ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
                         : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'

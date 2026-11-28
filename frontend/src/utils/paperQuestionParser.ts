@@ -16,7 +16,7 @@ export interface PaperQuestion {
   number: number;
   title: string;
   cleanTitle: string;
-  difficulty: 'BASIC' | 'MEDIUM' | 'HARD';
+  difficulty: 'BASIC' | 'MEDIUM' | 'HARD' | 'EXTREME';
   description: string;
   constraints: string[];
   testCases: PaperTestCase[];
@@ -40,18 +40,29 @@ export function cleanHtmlTags(html?: string): string {
 /**
  * Accurately determines question difficulty based on explicit badges, algorithmic taxonomy, and keywords.
  */
-export function inferQuestionDifficulty(title: string, description = '', rawBlock = ''): 'BASIC' | 'MEDIUM' | 'HARD' {
+export function inferQuestionDifficulty(title: string, description = '', rawBlock = ''): 'BASIC' | 'MEDIUM' | 'HARD' | 'EXTREME' {
   const cleanTitle = (title || '').toLowerCase();
   const combined = `${title} ${description}`.toLowerCase();
 
   // 1. Check for explicit difficulty badges/tags in raw HTML/Markdown
-  const explicitMatch = rawBlock.match(/(?:difficulty|level|tier)\s*[:\-]\s*(easy|basic|medium|hard|advanced)/i)
-    || rawBlock.match(/class=["'][^"']*\b(easy|basic|medium|hard|advanced)\b[^"']*["']/i);
+  const explicitMatch = rawBlock.match(/(?:difficulty|level|tier)\s*[:\-]\s*(?:<[^>]+>\s*)*(easy|basic|medium|hard|advanced|extreme|expert)/i)
+    || rawBlock.match(/class=["'][^"']*\b(easy|basic|medium|hard|advanced|extreme|expert)\b[^"']*["']/i);
   if (explicitMatch) {
     const val = explicitMatch[1].toLowerCase();
+    if (val === 'extreme' || val === 'expert') return 'EXTREME';
     if (val === 'easy' || val === 'basic') return 'BASIC';
     if (val === 'hard' || val === 'advanced') return 'HARD';
     if (val === 'medium') return 'MEDIUM';
+  }
+
+  // 1b. EXTREME / OLYMPIAD Patterns
+  const extremeKeywords = [
+    'extreme', 'heavy-light', 'centroid decomposition', 'suffix automaton', 'aho-corasick',
+    'dinic', 'min-cost max-flow', 'persistent segment', 'bitmask dp', 'digit dp',
+    'bipartite matching', 'hungarian', 'convex hull trick', 'tarjan', 'treap', 'splay tree'
+  ];
+  for (const kw of extremeKeywords) {
+    if (cleanTitle.includes(kw)) return 'EXTREME';
   }
 
   // 2. HARD / ADVANCED Patterns

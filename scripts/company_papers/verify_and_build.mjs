@@ -19,10 +19,15 @@ export function buildQuestionHtml(q) {
   }));
   const casesJson = JSON.stringify(casesPayload).replace(/"/g, '&quot;');
 
+  const diffTag = q.difficulty
+    ? `<span class="sr-only" data-difficulty="${escapeHtml(q.difficulty)}">Difficulty: ${escapeHtml(q.difficulty)}</span>`
+    : '';
+
   return `
 <div class="question-block mb-10 pb-8 border-b border-[#E9ECEF] dark:border-[#242424] last:border-b-0">
   <div class="mb-2">
     <h2 class="text-lg sm:text-xl font-display font-extrabold text-[#121417] dark:text-white m-0">Q${q.number}. ${escapeHtml(q.title)}</h2>
+    ${diffTag}
   </div>
   <div class="text-xs sm:text-sm text-gray-700 dark:text-gray-300 leading-relaxed my-3 font-sans">
     <p>${q.description}</p>
@@ -98,10 +103,13 @@ for q in data:
             import re, inspect
             # Split top-level "ident =" assignments onto separate lines to avoid Python chained-assignment syntax
             expr = tc['input'].replace('true', 'True').replace('false', 'False').replace('null', 'None')
-            expr = re.sub(r',\\s*(?=[a-zA-Z_][a-zA-Z0-9_]*\\s*=)', '\\n', expr)
-            exec(expr, {}, env)
-            sig = inspect.signature(fn)
-            args = [env[p] for p in sig.parameters.keys()]
+            if '=' in expr:
+                expr = re.sub(r',\\s*(?=[a-zA-Z_][a-zA-Z0-9_]*\\s*=)', '\\n', expr)
+                exec(expr, {}, env)
+                sig = inspect.signature(fn)
+                args = [env[p] for p in sig.parameters.keys()]
+            else:
+                args = list(ast.literal_eval(f"({expr},)"))
             res = fn(*args)
             actual = format_out(res)
             expected = str(tc['output']).strip()

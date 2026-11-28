@@ -428,7 +428,7 @@ export default function PaperCodingModal({
       title: question.title,
       slug: question.id,
       track: 'PROGRAMMING_150',
-      level: question.difficulty,
+      level: question.difficulty === 'EXTREME' ? 'HARD' : question.difficulty,
       category: 'ARRAYS',
       categoryLabel: `${companyName} • ${examName}`,
       description: question.description || 'No detailed problem statement provided.',
@@ -657,6 +657,8 @@ export default function PaperCodingModal({
                   ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                   : question.difficulty === 'MEDIUM'
                   ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                  : question.difficulty === 'EXTREME'
+                  ? 'bg-purple-500/10 text-purple-400 border border-purple-500/30'
                   : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
               }`}
             >
