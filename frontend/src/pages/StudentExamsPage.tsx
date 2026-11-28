@@ -348,8 +348,8 @@ export default function StudentExamsPage() {
   const renderStudentExamsContent = () => (
     <div className="space-y-8 animate-fadeIn">
       {/* ── Tier 1: Page Header & Pass Status ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E9ECEF] dark:border-[#17181F]">
-        <div>
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-[#E9ECEF] dark:border-[#17181F]">
+        <div className="min-w-0">
           <div className="flex items-center gap-2.5">
             <h1 className="text-xl sm:text-2xl font-display font-black text-[#121417] dark:text-white tracking-tight">
               Placement Mock Drives
@@ -364,10 +364,10 @@ export default function StudentExamsPage() {
         </div>
 
         {/* Action / Pro Pass Status */}
-        <div className="flex items-center gap-2.5 flex-wrap">
+        <div className="flex items-center gap-2.5 flex-wrap lg:flex-nowrap shrink-0">
           {isUserPro ? (
-            <div className="px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 flex items-center gap-2 text-xs font-bold shadow-2xs">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+            <div className="px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 flex items-center gap-2 text-xs font-bold shadow-2xs whitespace-nowrap">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
               <span>
                 Campus Pro Pass Active
                 {subData?.expiresAt
@@ -378,15 +378,15 @@ export default function StudentExamsPage() {
           ) : (
             <Link
               to="/pricing"
-              className="px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 flex items-center gap-2 text-xs font-bold hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors shadow-2xs"
+              className="px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 flex items-center gap-2 text-xs font-bold hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors shadow-2xs whitespace-nowrap"
             >
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
               <span>Upgrade Pass</span>
             </Link>
           )}
 
           {usageInfo && usageInfo.limit > 0 && (
-            <div className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-[#191a1e] border border-slate-200 dark:border-[#27292e] text-slate-700 dark:text-slate-200 text-xs font-mono font-bold shadow-2xs">
+            <div className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-[#191a1e] border border-slate-200 dark:border-[#27292e] text-slate-700 dark:text-slate-200 text-xs font-mono font-bold shadow-2xs whitespace-nowrap">
               {usageInfo.remaining} of {usageInfo.limit} remaining
             </div>
           )}
@@ -394,7 +394,7 @@ export default function StudentExamsPage() {
           {isAdmin && (
             <button
               onClick={() => setIsCreatePublicModalOpen(true)}
-              className="px-3 py-1.5 rounded-lg bg-[#121417] dark:bg-white text-white dark:text-black text-xs font-display font-bold uppercase tracking-wider shadow-xs transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+              className="px-3 py-1.5 rounded-lg bg-[#121417] dark:bg-white text-white dark:text-black text-xs font-display font-bold uppercase tracking-wider shadow-xs transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap"
               title="Commission an open national mock assessment"
             >
               <Globe className="w-3.5 h-3.5" />
@@ -404,18 +404,10 @@ export default function StudentExamsPage() {
 
           <button
             onClick={() => setIsGenerateModalOpen(true)}
-            className="px-3 py-1.5 rounded-lg bg-[#FD4A32] hover:bg-[#E0351D] text-black text-xs font-display font-bold uppercase tracking-wider shadow-xs transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+            className="px-3.5 py-1.5 rounded-lg bg-[#FD4A32] hover:bg-[#E0351D] text-white text-xs font-display font-bold uppercase tracking-wider shadow-xs transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap"
           >
             <Sparkles className="w-3.5 h-3.5" />
             <span>Generate Blueprint Exam</span>
-          </button>
-
-          <button
-            onClick={() => refetchExams()}
-            className="p-1.5 rounded-lg border border-[#E9ECEF] dark:border-[#17181F] bg-white dark:bg-[#0D0E12] text-[#868E96] hover:text-[#121417] dark:hover:text-white hover:border-[#FD4A32]/40 transition-colors cursor-pointer"
-            title="Refresh drives"
-          >
-            <RotateCcw className="w-4 h-4" />
           </button>
         </div>
       </div>
